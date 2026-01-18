@@ -7,7 +7,9 @@ from openai import OpenAI
 # --- INITIALIZATION ---
 try:
     notion = Client(auth=os.getenv("NOTION_TOKEN"))
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    # FIX: .strip() removes hidden newlines that cause the Protocol Error
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    client = OpenAI(api_key=api_key)
 except Exception as e:
     print(f"Auth Error: {e}")
     exit(1)
@@ -37,20 +39,18 @@ def get_last_7_days_data():
         props = page['properties']
         try:
             # ADJUST THESE KEYS if your Notion column names are different!
-            # We assume your Title column is called "Name" or "Activity Name"
             name_key = "Name" if "Name" in props else "Activity Name"
             name = props[name_key]['title'][0]['plain_text']
             
-            # We assume Date is "Date"
             date = props['Date']['date']['start']
             
-            # We assume Distance is "Distance" or "Distance (km)"
             dist_key = "Distance" if "Distance" in props else "Distance (km)"
             dist = props[dist_key]['number']
             
             activity_log.append(f"- {date}: {name} ({dist}km)")
         except Exception as e:
-            print(f"Skipping an activity due to missing property: {e}")
+            # Silently skip missing data rows to prevent crashes
+            pass
 
     # --- 2. Fetch Health Data ---
     health_log = []
@@ -64,14 +64,14 @@ def get_last_7_days_data():
         )
         for page in health_query['results']:
             props = page['properties']
-            date = props['Date']['date']['start']
-            
-            # Safe access to properties
-            hrv = props.get('HRV (ms)', {}).get('number', 'N/A')
-            bb_max = props.get('Body Battery Max', {}).get('number', 'N/A')
-            stress = props.get('Stress Avg', {}).get('number', 'N/A')
-            
-            health_log.append(f"- {date}: HRV {hrv}, Body Batt Max {bb_max}, Stress {stress}")
+            try:
+                date = props['Date']['date']['start']
+                hrv = props.get('HRV (ms)', {}).get('number', 'N/A')
+                bb_max = props.get('Body Battery Max', {}).get('number', 'N/A')
+                stress = props.get('Stress Avg', {}).get('number', 'N/A')
+                health_log.append(f"- {date}: HRV {hrv}, Body Batt Max {bb_max}, Stress {stress}")
+            except:
+                pass
 
     return "\n".join(activity_log), "\n".join(health_log)
 
@@ -114,7 +114,7 @@ def save_report(insight_json):
     data = json.loads(insight_json)
     today_iso = datetime.date.today().isoformat()
     
-    print(f"Saving Report: {data['score']}")
+    print(f"Saving Report: {data.get('score', 'No Score')}")
     
     notion.pages.create(
         parent={"database_id": COACH_DB_ID},
