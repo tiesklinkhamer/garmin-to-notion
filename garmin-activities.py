@@ -54,15 +54,22 @@ def sync_activities():
         sport_type = activity['activityType']['typeKey'] # e.g., 'running', 'cycling'
 
         # --- SEND TO NOTION ---
+    
         properties = {
-            "Name": {"title": [{"text": {"content": name}}]},
-            "Date": {"date": {"start": start_time}},
-            "Distance (km)": {"number": distance_km}, # Ensure this matches your column
-            "Time": {"number": duration_sec},         # Ensure this matches your column
-            "Activity ID": {"rich_text": [{"text": {"content": str(activity_id)}}]},
-            "Type": {"select": {"name": sport_type}},
+            # Change "Name" to "Activity Name" (or whatever yours is called)
+            "Activity Name": {"title": [{"text": {"content": name}}]},
             
-            # THE NEW COLUMN
+            "Date": {"date": {"start": start_time}},
+            "Distance (km)": {"number": distance_km},
+            
+            # Change "Time" to "Duration"
+            "Duration": {"number": duration_sec},
+            
+            "Activity ID": {"rich_text": [{"text": {"content": str(activity_id)}}]},
+            
+            # Change "Type" to "Sport"
+            "Sport": {"select": {"name": sport_type}},
+            
             "Avg HR": {"number": avg_hr} if avg_hr else None
         }
 
