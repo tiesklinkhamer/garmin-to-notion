@@ -65,4 +65,12 @@ jobs:
           NOTION_HEALTH_DB_ID: ${{ secrets.NOTION_HEALTH_DB_ID }}
           NOTION_COACH_DB_ID: ${{ secrets.NOTION_COACH_DB_ID }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: python garmin-coach.py        
+        run: python garmin-coach.py   
+
+        # --- NEW STEP HERE ---
+      - name: Generate Visual Charts
+        env:
+           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+           NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+           NOTION_COACH_DB_ID: ${{ secrets.NOTION_COACH_DB_ID }}
+        run: python garmin-charts.py
