@@ -1,9 +1,8 @@
-name: Sync Health Metrics
+name: Sync Garmin Data
 on:
   schedule:
-    # Runs at 08:00 UTC every day (adjust as needed)
-    - cron: '0 8 * * *'
-  workflow_dispatch: # Allows manual triggering
+    - cron: '0 8 * * *' # Runs daily at 8am UTC
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -15,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.10' # Kept at 3.10 to fix the error you saw earlier
 
       - name: Install dependencies
         run: |
@@ -28,3 +27,13 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_HEALTH_DB_ID: ${{ secrets.NOTION_HEALTH_DB_ID }}
         run: python garmin-health-metrics.py
+
+      - name: Run Gear Sync
+        if: always() # Runs even if Health Sync fails
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}      # Main Activities DB
+          NOTION_GEAR_DB_ID: ${{ secrets.NOTION_GEAR_DB_ID }} # New Gear DB
+        run: python garmin-gear.py
