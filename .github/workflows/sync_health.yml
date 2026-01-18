@@ -1,0 +1,30 @@
+name: Sync Health Metrics
+on:
+  schedule:
+    # Runs at 08:00 UTC every day (adjust as needed)
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Health Sync
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_HEALTH_DB_ID: ${{ secrets.NOTION_HEALTH_DB_ID }}
+        run: python garmin-health-metrics.py
