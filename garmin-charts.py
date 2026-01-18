@@ -45,7 +45,7 @@ def get_last_30_days_data():
             
             hr_key = "Avg HR" if "Avg HR" in props else "Average Heart Rate"
             # Some entries might not have HR data (e.g. manual entry), so we use 0 or None
-            hr = props.get(hr_key, {}).get('number', 0)
+            hr = props.get("Avg HR", {}).get('number', 0)
 
             if dist > 0: # Only plot days with activity
                 # Format date to be shorter (e.g., "Jan 18")
