@@ -37,3 +37,32 @@ jobs:
           NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}      # Main Activities DB
           NOTION_GEAR_DB_ID: ${{ secrets.NOTION_GEAR_DB_ID }} # New Gear DB
         run: python garmin-gear.py
+
+  coach:
+    # Remove 'needs: sync' if you want to run it independently, 
+    # but keeping it ensures we have the latest data first.
+    needs: sync 
+    runs-on: ubuntu-latest
+    # Run at 18:00 UTC on Sundays (Cron: Minute Hour DayOfMonth Month DayOfWeek)
+    # 0 = Sunday
+    if: github.event_name == 'workflow_dispatch' || (github.event.schedule == '0 18 * * 0')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # Must be 3.10
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run AI Coach
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+          NOTION_HEALTH_DB_ID: ${{ secrets.NOTION_HEALTH_DB_ID }}
+          NOTION_COACH_DB_ID: ${{ secrets.NOTION_COACH_DB_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python garmin-coach.py        
