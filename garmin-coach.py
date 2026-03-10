@@ -1,15 +1,14 @@
 import os
 import datetime
 import json
+import anthropic
 from notion_client import Client
-from openai import OpenAI
 
 # --- INITIALIZATION ---
 try:
     notion = Client(auth=os.getenv("NOTION_TOKEN"))
-    # FIX: .strip() removes hidden newlines that cause the Protocol Error
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    client = OpenAI(api_key=api_key)
+    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    client = anthropic.Anthropic(api_key=api_key)
 except Exception as e:
     print(f"Auth Error: {e}")
     exit(1)
@@ -22,7 +21,7 @@ COACH_DB_ID = os.getenv("NOTION_COACH_DB_ID")
 def get_last_7_days_data():
     today = datetime.date.today()
     seven_days_ago = (today - datetime.timedelta(days=7)).isoformat()
-    
+
     print(f"Fetching data since {seven_days_ago}...")
 
     # --- 1. Fetch Training Data ---
@@ -33,7 +32,7 @@ def get_last_7_days_data():
             "date": {"on_or_after": seven_days_ago}
         }
     )
-    
+
     activity_log = []
     for page in activities_query['results']:
         props = page['properties']
@@ -41,14 +40,14 @@ def get_last_7_days_data():
             # ADJUST THESE KEYS if your Notion column names are different!
             name_key = "Name" if "Name" in props else "Activity Name"
             name = props[name_key]['title'][0]['plain_text']
-            
+
             date = props['Date']['date']['start']
-            
+
             dist_key = "Distance" if "Distance" in props else "Distance (km)"
             dist = props[dist_key]['number']
-            
+
             activity_log.append(f"- {date}: {name} ({dist}km)")
-        except Exception as e:
+        except Exception:
             # Silently skip missing data rows to prevent crashes
             pass
 
@@ -70,41 +69,39 @@ def get_last_7_days_data():
                 bb_max = props.get('Body Battery Max', {}).get('number', 'N/A')
                 stress = props.get('Stress Avg', {}).get('number', 'N/A')
                 health_log.append(f"- {date}: HRV {hrv}, Body Batt Max {bb_max}, Stress {stress}")
-            except:
+            except Exception:
                 pass
 
     return "\n".join(activity_log), "\n".join(health_log)
 
 def generate_coaching_insight(activity_text, health_text):
     print("Asking the AI Coach...")
-    
+
     if not activity_text and not health_text:
         return None
 
-    prompt = f"""
-    You are an elite endurance sports coach. Analyze my last 7 days.
-    
-    TRAINING LOG:
-    {activity_text}
-    
-    HEALTH/RECOVERY LOG:
-    {health_text}
-    
-    Task:
-    1. 'summary': 2 sentences on volume/intensity vs recovery.
-    2. 'score': Choose exactly one: 'Good', 'Moderate', or 'Poor'.
-    3. 'action': One specific, actionable tip for next week (e.g., "Take Tuesday off," "Increase long run by 2km").
-    
-    Output purely strictly valid JSON.
-    """
+    prompt = f"""You are an elite endurance sports coach. Analyze my last 7 days.
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"}
+TRAINING LOG:
+{activity_text}
+
+HEALTH/RECOVERY LOG:
+{health_text}
+
+Task:
+1. 'summary': 2 sentences on volume/intensity vs recovery.
+2. 'score': Choose exactly one: 'Good', 'Moderate', or 'Poor'.
+3. 'action': One specific, actionable tip for next week (e.g., "Take Tuesday off," "Increase long run by 2km").
+
+Output purely strictly valid JSON with keys: summary, score, action."""
+
+    message = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}]
     )
-    
-    return response.choices[0].message.content
+
+    return message.content[0].text
 
 def save_report(insight_json):
     if not insight_json:
@@ -113,9 +110,9 @@ def save_report(insight_json):
 
     data = json.loads(insight_json)
     today_iso = datetime.date.today().isoformat()
-    
+
     print(f"Saving Report: {data.get('score', 'No Score')}")
-    
+
     notion.pages.create(
         parent={"database_id": COACH_DB_ID},
         properties={
@@ -131,6 +128,6 @@ def save_report(insight_json):
 if __name__ == "__main__":
     act_text, health_text = get_last_7_days_data()
     print(f"Data gathered. {len(act_text)} chars of training data.")
-    
+
     insight = generate_coaching_insight(act_text, health_text)
     save_report(insight)
