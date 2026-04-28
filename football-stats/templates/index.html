@@ -2,138 +2,137 @@
 {% block title %}{{ league.flag }} {{ league.name }} — Football Stats{% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="d-flex align-items-center justify-content-between mb-4">
-  <div>
-    <h1 class="h3 mb-0 fw-bold">{{ league.flag }} {{ league.name }}</h1>
-    {% if season %}
-      <span class="text-muted small">{{ season.get('startDate', '')[:4] }}/{{ season.get('endDate', '')[:4] }} Season</span>
-    {% endif %}
-  </div>
-  <a href="/teams?league={{ league_code }}" class="btn btn-outline-primary btn-sm">
-    <i class="bi bi-shield-fill me-1"></i>All Teams
-  </a>
-</div>
 
-<div class="row g-4">
-  <!-- Top Scorers -->
-  <div class="col-lg-6">
-    <div class="card h-100 border-secondary">
-      <div class="card-header d-flex align-items-center gap-2 border-secondary">
-        <i class="bi bi-fire text-danger"></i>
-        <span class="fw-semibold">Top Scorers</span>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover table-dark mb-0 align-middle">
-            <thead class="table-secondary">
-              <tr>
-                <th class="ps-3">#</th>
-                <th>Player</th>
-                <th class="text-center" title="Goals"><i class="bi bi-dribbble"></i></th>
-                <th class="text-center" title="Assists"><i class="bi bi-arrow-left-right"></i></th>
-                <th class="text-center" title="Matches Played"><i class="bi bi-calendar3"></i></th>
-                <th class="text-center pe-3" title="Goals per match">G/M</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for entry in scorers %}
-                {% set player = entry.player %}
-                {% set stats = entry.playedMatches %}
-                <tr>
-                  <td class="ps-3 text-muted">{{ loop.index }}</td>
-                  <td>
-                    <a href="/player/{{ player.id }}" class="text-decoration-none text-white d-flex align-items-center gap-2">
-                      <div class="avatar-circle bg-secondary">
-                        {{ player.name[:1] }}
-                      </div>
-                      <div>
-                        <div class="fw-medium lh-sm">{{ player.name }}</div>
-                        <div class="small text-muted">
-                          {% if entry.team %}{{ entry.team.shortName or entry.team.name }}{% endif %}
-                          {% if player.nationality %} · {{ player.nationality }}{% endif %}
-                        </div>
-                      </div>
-                    </a>
-                  </td>
-                  <td class="text-center fw-bold text-warning">{{ entry.goals or 0 }}</td>
-                  <td class="text-center text-info">{{ entry.assists or 0 }}</td>
-                  <td class="text-center text-muted">{{ entry.playedMatches or '—' }}</td>
-                  <td class="text-center pe-3 text-muted small">
-                    {% if entry.playedMatches and entry.goals %}
-                      {{ "%.2f"|format(entry.goals / entry.playedMatches) }}
-                    {% else %}—{% endif %}
-                  </td>
-                </tr>
-              {% else %}
-                <tr><td colspan="6" class="text-center py-4 text-muted">No scorer data available.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+<!-- Trending top scorer -->
+{% if scorers %}
+  {% set top = scorers[0] %}
+  <div class="trending-card">
+    <div class="trending-label">
+      <i class="bi bi-fire"></i> Trending Performance
+    </div>
+    <a href="/player/{{ top.player.id }}" class="trending-inner">
+      <div class="trending-avatar">{{ top.player.name | initials }}</div>
+      <div class="trending-info">
+        <div class="trending-name">{{ top.player.name }}</div>
+        <div class="trending-sub">
+          {% if top.team %}{{ top.team.shortName or top.team.name }}{% endif %}
+          {% if top.player.nationality %} · {{ top.player.nationality }}{% endif %}
+          &nbsp;·&nbsp; <span style="color:var(--yellow)">Top scorer</span>
         </div>
       </div>
+      <div class="trending-stats">
+        <div class="trending-stat">
+          <span class="val" style="color:var(--yellow)">{{ top.goals or 0 }}</span>
+          <span class="lbl">Goals</span>
+        </div>
+        {% if top.assists %}
+        <div class="trending-stat">
+          <span class="val" style="color:var(--cyan)">{{ top.assists }}</span>
+          <span class="lbl">Assists</span>
+        </div>
+        {% endif %}
+        {% if top.playedMatches %}
+        <div class="trending-stat">
+          <span class="val" style="color:var(--text-muted)">{{ top.playedMatches }}</span>
+          <span class="lbl">Games</span>
+        </div>
+        {% endif %}
+      </div>
+    </a>
+  </div>
+{% endif %}
+
+<!-- Two-column: scorers + table -->
+<div class="grid-2">
+
+  <!-- Top Scorers -->
+  <div class="card">
+    <div class="card-head">
+      <i class="bi bi-fire" style="color:var(--red)"></i> Top Scorers
+      <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);font-weight:500;">
+        {% if season %}{{ season.get('startDate','')[:4] }}/{{ season.get('endDate','')[:4] }}{% endif %}
+      </span>
     </div>
+    {% for entry in scorers %}
+      <a href="/player/{{ entry.player.id }}" class="scorer-row">
+        <span class="scorer-rank">{{ loop.index }}</span>
+        <div class="scorer-avatar">{{ entry.player.name | initials }}</div>
+        <div class="scorer-info">
+          <div class="scorer-name">{{ entry.player.name }}</div>
+          <div class="scorer-team">
+            {% if entry.team %}{{ entry.team.shortName or entry.team.name }}{% endif %}
+            {% if entry.player.nationality %} · {{ entry.player.nationality }}{% endif %}
+          </div>
+        </div>
+        <div class="scorer-assists">
+          <div class="aval">{{ entry.assists or 0 }}</div>
+          <div class="albl">Ast</div>
+        </div>
+        <div class="scorer-goals">
+          <div class="gval">{{ entry.goals or 0 }}</div>
+          <div class="glbl">Goals</div>
+        </div>
+      </a>
+    {% else %}
+      <div style="padding:32px;text-align:center;color:var(--text-muted)">No data available.</div>
+    {% endfor %}
   </div>
 
   <!-- League Table -->
-  <div class="col-lg-6">
-    <div class="card h-100 border-secondary">
-      <div class="card-header d-flex align-items-center gap-2 border-secondary">
-        <i class="bi bi-list-ol text-primary"></i>
-        <span class="fw-semibold">League Table</span>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover table-dark mb-0 align-middle">
-            <thead class="table-secondary">
-              <tr>
-                <th class="ps-3">#</th>
-                <th>Team</th>
-                <th class="text-center">P</th>
-                <th class="text-center">W</th>
-                <th class="text-center">D</th>
-                <th class="text-center">L</th>
-                <th class="text-center">GD</th>
-                <th class="text-center pe-3 fw-bold">Pts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in table %}
-                <tr class="{% if loop.index <= 4 %}cl-zone{% elif loop.index == 5 %}el-zone{% elif loop.index >= table|length - 2 %}rel-zone{% endif %}">
-                  <td class="ps-3 text-muted">{{ row.position }}</td>
-                  <td>
-                    <a href="/team/{{ row.team.id }}" class="text-decoration-none text-white d-flex align-items-center gap-2">
-                      {% if row.team.crest %}
-                        <img src="{{ row.team.crest }}" alt="" width="20" height="20" style="object-fit:contain" onerror="this.style.display='none'">
-                      {% endif %}
-                      <span>{{ row.team.shortName or row.team.name }}</span>
-                    </a>
-                  </td>
-                  <td class="text-center text-muted">{{ row.playedGames }}</td>
-                  <td class="text-center text-success">{{ row.won }}</td>
-                  <td class="text-center text-secondary">{{ row.draw }}</td>
-                  <td class="text-center text-danger">{{ row.lost }}</td>
-                  <td class="text-center text-muted">
-                    {% set gd = row.goalDifference %}
-                    <span class="{% if gd > 0 %}text-success{% elif gd < 0 %}text-danger{% endif %}">
-                      {% if gd > 0 %}+{% endif %}{{ gd }}
-                    </span>
-                  </td>
-                  <td class="text-center pe-3 fw-bold">{{ row.points }}</td>
-                </tr>
-              {% else %}
-                <tr><td colspan="8" class="text-center py-4 text-muted">No standings available.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card-footer border-secondary small text-muted d-flex gap-3">
-        <span><span class="badge bg-primary opacity-75">●</span> Champions League</span>
-        <span><span class="badge bg-warning opacity-75">●</span> Europa League</span>
-        <span><span class="badge bg-danger opacity-75">●</span> Relegation</span>
-      </div>
+  <div class="card">
+    <div class="card-head">
+      <i class="bi bi-list-ol" style="color:var(--blue)"></i> League Table
+    </div>
+    <table class="league-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Team</th>
+          <th>P</th>
+          <th>W</th>
+          <th>D</th>
+          <th>L</th>
+          <th>GD</th>
+          <th>Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set total = table | length %}
+        {% for row in table %}
+          {% set pos = row.position %}
+          {% set zone = 'zone-cl' if pos <= 4 else ('zone-el' if pos == 5 else ('zone-rel' if pos > total - 3 else '')) %}
+          <tr class="{{ zone }}">
+            <td>{{ pos }}</td>
+            <td>
+              <div class="tname">
+                {% if row.team.crest %}
+                  <img src="{{ row.team.crest }}" alt="" onerror="this.style.display='none'">
+                {% endif %}
+                <a href="/team/{{ row.team.id }}" style="text-decoration:none;color:inherit;font-weight:700;">
+                  {{ row.team.shortName or row.team.name }}
+                </a>
+              </div>
+            </td>
+            <td style="color:var(--text-muted)">{{ row.playedGames }}</td>
+            <td style="color:var(--green)">{{ row.won }}</td>
+            <td style="color:var(--text-muted)">{{ row.draw }}</td>
+            <td style="color:var(--red)">{{ row.lost }}</td>
+            <td class="{% if row.goalDifference > 0 %}gd-pos{% elif row.goalDifference < 0 %}gd-neg{% endif %}">
+              {% if row.goalDifference > 0 %}+{% endif %}{{ row.goalDifference }}
+            </td>
+            <td>{{ row.points }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" style="padding:32px;text-align:center;color:var(--text-muted)">No data.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="padding:10px 16px;font-size:0.7rem;color:var(--text-muted);display:flex;gap:14px;border-top:1px solid var(--border);">
+      <span style="border-left:3px solid var(--blue);padding-left:5px">Champions League</span>
+      <span style="border-left:3px solid var(--orange);padding-left:5px">Europa League</span>
+      <span style="border-left:3px solid var(--red);padding-left:5px">Relegation</span>
     </div>
   </div>
+
 </div>
 {% endblock %}

@@ -2,110 +2,99 @@
 {% block title %}{{ team.name }} — Football Stats{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/" class="text-secondary">Home</a></li>
-    <li class="breadcrumb-item active">{{ team.shortName or team.name }}</li>
-  </ol>
-</nav>
 
-<!-- Team header -->
-<div class="card border-secondary mb-4">
-  <div class="card-body">
-    <div class="d-flex align-items-center gap-4 flex-wrap">
-      {% if team.crest %}
-        <img src="{{ team.crest }}" alt="{{ team.name }}" width="96" height="96" style="object-fit:contain">
-      {% endif %}
-      <div>
-        <h1 class="h3 fw-bold mb-1">{{ team.name }}</h1>
-        <div class="d-flex flex-wrap gap-3 text-muted small">
-          {% if team.founded %}
-            <span><i class="bi bi-calendar3 me-1"></i>Founded {{ team.founded }}</span>
-          {% endif %}
-          {% if team.venue %}
-            <span><i class="bi bi-geo-alt me-1"></i>{{ team.venue }}</span>
-          {% endif %}
-          {% if team.area and team.area.name %}
-            <span><i class="bi bi-globe me-1"></i>{{ team.area.name }}</span>
-          {% endif %}
-          {% if team.website %}
-            <a href="{{ team.website }}" target="_blank" class="text-secondary">
-              <i class="bi bi-link-45deg me-1"></i>Website
-            </a>
-          {% endif %}
-        </div>
-      </div>
-      <!-- Club colours badge -->
-      {% if team.clubColors %}
-        <div class="ms-auto">
-          <span class="badge bg-secondary">{{ team.clubColors }}</span>
-        </div>
-      {% endif %}
-    </div>
-  </div>
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">/</span>
+  <a href="/teams">Teams</a>
+  <span class="sep">/</span>
+  <span>{{ team.shortName or team.name }}</span>
 </div>
 
-<!-- Running competitions -->
-{% if team.runningCompetitions %}
-  <div class="mb-4">
-    <h2 class="h5 fw-semibold mb-2">Active Competitions</h2>
-    <div class="d-flex flex-wrap gap-2">
-      {% for comp in team.runningCompetitions %}
-        <a href="/?league={{ comp.code }}" class="badge bg-secondary text-decoration-none fs-6">
-          {{ comp.emblem and '<img src="' + comp.emblem + '" width="16" height="16" class="me-1">' or '' }}
-          {{ comp.name }}
-        </a>
-      {% endfor %}
+<!-- Team header -->
+<div class="card mb-20">
+  <div style="padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+    {% if team.crest %}
+      <img src="{{ team.crest }}" alt="{{ team.name }}" style="width:80px;height:80px;object-fit:contain;">
+    {% else %}
+      <div class="team-crest-fallback" style="width:80px;height:80px;font-size:2rem;">{{ team.name[:1] }}</div>
+    {% endif %}
+    <div style="flex:1;min-width:0">
+      <h1 style="font-size:1.4rem;font-weight:900;margin-bottom:6px;">{{ team.name }}</h1>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:0.8rem;color:var(--text-muted);">
+        {% if team.founded %}
+          <span><i class="bi bi-calendar3"></i> Est. {{ team.founded }}</span>
+        {% endif %}
+        {% if team.venue %}
+          <span><i class="bi bi-geo-alt"></i> {{ team.venue }}</span>
+        {% endif %}
+        {% if team.area and team.area.name %}
+          <span><i class="bi bi-globe"></i> {{ team.area.name }}</span>
+        {% endif %}
+        {% if team.clubColors %}
+          <span><i class="bi bi-palette"></i> {{ team.clubColors }}</span>
+        {% endif %}
+        {% if team.website %}
+          <a href="{{ team.website }}" target="_blank" style="color:var(--cyan);text-decoration:none;">
+            <i class="bi bi-link-45deg"></i> Website
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <div style="font-size:1.5rem;font-weight:900;color:var(--text-muted);">
+      {{ squad | length }} <span style="font-size:0.75rem;font-weight:600;display:block;text-align:center">Players</span>
     </div>
   </div>
-{% endif %}
 
-<!-- Squad table grouped by position -->
-{% set positions = ['Goalkeeper', 'Defence', 'Midfield', 'Offence'] %}
-{% for pos in positions %}
-  {% set members = squad | selectattr('position', 'equalto', pos) | list %}
+  <!-- Active competitions -->
+  {% if team.runningCompetitions %}
+    <div style="padding:0 20px 16px;display:flex;flex-wrap:wrap;gap:8px;">
+      {% for comp in team.runningCompetitions %}
+        {% if comp.code and comp.code in ['PL','PD','BL1','SA','FL1'] %}
+          <a href="/?league={{ comp.code }}"
+             style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;
+                    font-size:0.75rem;font-weight:700;background:var(--bg-raised);
+                    color:var(--text-muted);text-decoration:none;border:1px solid var(--border);">
+            {{ comp.name }}
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<!-- Squad by position -->
+{% set positions = [('Goalkeeper','GK','pos-gk'),('Defence','DEF','pos-def'),('Midfield','MID','pos-mid'),('Offence','FWD','pos-fwd')] %}
+{% for pos_key, pos_label, pos_cls in positions %}
+  {% set members = squad | selectattr('position', 'equalto', pos_key) | list %}
   {% if members %}
-    <div class="card border-secondary mb-3">
-      <div class="card-header border-secondary d-flex align-items-center gap-2">
-        {% if pos == 'Goalkeeper' %}<i class="bi bi-hand-index-thumb text-warning"></i>
-        {% elif pos == 'Defence' %}<i class="bi bi-shield-fill text-primary"></i>
-        {% elif pos == 'Midfield' %}<i class="bi bi-arrow-left-right text-success"></i>
-        {% else %}<i class="bi bi-fire text-danger"></i>{% endif %}
-        <span class="fw-semibold">{{ pos }}s</span>
-        <span class="badge bg-secondary ms-1">{{ members|length }}</span>
+    <div class="card mb-20">
+      <div class="card-head">
+        {% if pos_key == 'Goalkeeper' %}<i class="bi bi-hand-index-thumb" style="color:var(--yellow)"></i>
+        {% elif pos_key == 'Defence'   %}<i class="bi bi-shield-fill" style="color:var(--blue)"></i>
+        {% elif pos_key == 'Midfield'  %}<i class="bi bi-arrow-left-right" style="color:var(--green)"></i>
+        {% else                        %}<i class="bi bi-fire" style="color:var(--red)"></i>{% endif %}
+        {{ pos_key }}s
+        <span style="margin-left:6px;font-size:0.72rem;font-weight:500;color:var(--text-muted)">{{ members | length }}</span>
       </div>
-      <div class="table-responsive">
-        <table class="table table-hover table-dark mb-0 align-middle">
-          <thead class="table-secondary">
-            <tr>
-              <th class="ps-3">#</th>
-              <th>Name</th>
-              <th>Nationality</th>
-              <th>Date of Birth</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for player in members %}
-              <tr>
-                <td class="ps-3 text-muted">{{ player.shirtNumber or '—' }}</td>
-                <td>
-                  <a href="/player/{{ player.id }}" class="text-decoration-none text-white d-flex align-items-center gap-2">
-                    <div class="avatar-circle bg-secondary">{{ player.name[:1] }}</div>
-                    {{ player.name }}
-                  </a>
-                </td>
-                <td class="text-muted">{{ player.nationality or '—' }}</td>
-                <td class="text-muted">{{ player.dateOfBirth or '—' }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      {% for player in members %}
+        <a href="/player/{{ player.id }}" class="player-row">
+          <span class="player-num">{{ player.shirtNumber or '—' }}</span>
+          <span class="pos-badge {{ pos_cls }}">{{ pos_label }}</span>
+          <div class="player-main">
+            <div class="player-name-text">{{ player.name }}</div>
+            <div class="player-sub">{{ player.nationality or '' }}</div>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">{{ player.dateOfBirth or '' }}</div>
+          <i class="bi bi-chevron-right" style="color:var(--text-muted);font-size:0.75rem;flex-shrink:0;margin-left:8px;"></i>
+        </a>
+      {% endfor %}
     </div>
   {% endif %}
 {% endfor %}
 
 {% if not squad %}
-  <div class="text-center text-muted py-5">No squad data available for this team.</div>
+  <div style="text-align:center;padding:60px;color:var(--text-muted)">No squad data available.</div>
 {% endif %}
+
 {% endblock %}

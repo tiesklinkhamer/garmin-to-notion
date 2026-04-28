@@ -2,131 +2,190 @@
 {% block title %}{{ player.name }} — Football Stats{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/" class="text-secondary">Home</a></li>
-    {% if player.currentTeam %}
-      <li class="breadcrumb-item">
-        <a href="/team/{{ player.currentTeam.id }}" class="text-secondary">{{ player.currentTeam.shortName or player.currentTeam.name }}</a>
-      </li>
-    {% endif %}
-    <li class="breadcrumb-item active">{{ player.name }}</li>
-  </ol>
-</nav>
 
-<div class="row g-4">
-  <!-- Player card -->
-  <div class="col-md-4 col-lg-3">
-    <div class="card border-secondary text-center p-4">
-      <div class="avatar-circle-lg mx-auto mb-3">{{ player.name[:1] }}</div>
-      <h2 class="h5 fw-bold mb-1">{{ player.name }}</h2>
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">/</span>
+  {% if player.currentTeam %}
+    <a href="/team/{{ player.currentTeam.id }}">{{ player.currentTeam.shortName or player.currentTeam.name }}</a>
+    <span class="sep">/</span>
+  {% endif %}
+  <span>{{ player.name }}</span>
+</div>
+
+<!-- Player card -->
+<div class="card mb-20">
+
+  <!-- Yellow hero -->
+  <div class="player-hero">
+    <div class="player-hero-top">
       {% if player.currentTeam %}
-        <a href="/team/{{ player.currentTeam.id }}" class="text-muted text-decoration-none small">
+        <a href="/team/{{ player.currentTeam.id }}" class="team-pill">
           {% if player.currentTeam.crest %}
-            <img src="{{ player.currentTeam.crest }}" width="16" height="16" style="object-fit:contain" onerror="this.style.display='none'" class="me-1">
+            <img src="{{ player.currentTeam.crest }}" onerror="this.style.display='none'">
           {% endif %}
-          {{ player.currentTeam.name }}
+          {{ player.currentTeam.shortName or player.currentTeam.name }}
         </a>
+      {% else %}
+        <div></div>
       {% endif %}
+      <div style="font-size:0.75rem;font-weight:700;color:rgba(17,24,39,0.55);padding-top:2px;">
+        {{ pos_abbr }}
+      </div>
+    </div>
 
-      <hr class="border-secondary my-3">
-      <dl class="row text-start small mb-0">
-        {% if player.position %}
-          <dt class="col-5 text-muted">Position</dt>
-          <dd class="col-7">{{ player.position }}</dd>
+    <div class="player-avatar-wrap" style="margin-top:12px;">
+      {{ player.name | initials }}
+    </div>
+    <div class="player-hero-name">{{ player.name }}</div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar" id="playerTabBar">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="career">Career Stats</button>
+    <button class="tab-btn" data-tab="matches">Matches</button>
+    <button class="tab-btn" data-tab="bio">Bio</button>
+  </div>
+
+  <!-- Overview tab -->
+  <div id="tab-overview" class="tab-panel">
+    <div class="stat-grid stat-grid-3">
+      <div class="stat-cell">
+        <span class="sv">{{ pos_abbr or '—' }}</span>
+        <span class="sl">Position</span>
+      </div>
+      <div class="stat-cell">
+        <span class="sv" style="font-size:0.95rem">
+          {{ player.dateOfBirth or '—' }}
+        </span>
+        <span class="sl">Birthdate</span>
+      </div>
+      <div class="stat-cell">
+        <span class="sv">{{ player.nationality or '—' }}</span>
+        <span class="sl">Nationality</span>
+      </div>
+      <div class="stat-cell">
+        <span class="sv">{{ player.shirtNumber or '—' }}</span>
+        <span class="sl">Shirt #</span>
+      </div>
+      <div class="stat-cell">
+        {% if player.currentTeam and player.currentTeam.contract %}
+          <span class="sv" style="font-size:0.9rem">{{ player.currentTeam.contract.get('until','—') }}</span>
+        {% else %}
+          <span class="sv">—</span>
         {% endif %}
-        {% if player.nationality %}
-          <dt class="col-5 text-muted">Nationality</dt>
-          <dd class="col-7">{{ player.nationality }}</dd>
+        <span class="sl">Contract Until</span>
+      </div>
+      <div class="stat-cell">
+        <span class="sv">{{ player.section or player.position or '—' }}</span>
+        <span class="sl">Section</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Career Stats tab -->
+  <div id="tab-career" class="tab-panel" style="display:none">
+    <div style="padding:16px;border-bottom:1px solid var(--border);">
+      <div class="career-head">
+        <span class="career-title">Career Statistics</span>
+        <i class="bi bi-chevron-right" style="color:var(--text-muted);font-size:0.8rem"></i>
+      </div>
+      <!-- Top-level career numbers come from recent matches if available -->
+      {% if recent_matches %}
+        {% set goals_scored = namespace(v=0) %}
+        {% set assists_count = namespace(v=0) %}
+        {% for m in recent_matches %}
+          {# we can only show match count from what we have #}
+        {% endfor %}
+        <div class="career-stats-row">
+          <div class="career-stat">
+            <span class="cv">{{ recent_matches | length }}</span>
+            <span class="cl">Recent</span>
+          </div>
+          <div class="career-stat">
+            <span class="cv" style="color:var(--text-muted)">—</span>
+            <span class="cl">Goals</span>
+          </div>
+          <div class="career-stat">
+            <span class="cv" style="color:var(--text-muted)">—</span>
+            <span class="cl">Assists</span>
+          </div>
+          <div class="career-stat">
+            <span class="cv" style="color:var(--text-muted)">—</span>
+            <span class="cl">Cards</span>
+          </div>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;">
+          Detailed career totals require an upgraded API tier.
+          Showing last {{ recent_matches | length }} matches below.
+        </p>
+      {% else %}
+        <p style="font-size:0.82rem;color:var(--text-muted)">No career data available.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Matches tab -->
+  <div id="tab-matches" class="tab-panel" style="display:none">
+    {% if recent_matches %}
+      {% for m in recent_matches %}
+        <div class="match-row">
+          <div class="match-date">{{ m.utcDate[:10] if m.utcDate else '—' }}</div>
+          <div class="match-teams">
+            <div style="font-weight:700;font-size:0.87rem;">
+              {{ m.homeTeam.shortName or m.homeTeam.name }}
+              <span style="color:var(--text-muted);font-weight:400"> vs </span>
+              {{ m.awayTeam.shortName or m.awayTeam.name }}
+            </div>
+            <div class="match-comp">{{ m.competition.name if m.competition else '' }}</div>
+          </div>
+          <div class="match-score">
+            {% if m.score and m.score.fullTime %}
+              {{ m.score.fullTime.home }} — {{ m.score.fullTime.away }}
+            {% else %}—{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div style="padding:32px;text-align:center;color:var(--text-muted)">No recent matches available.</div>
+    {% endif %}
+  </div>
+
+  <!-- Bio tab -->
+  <div id="tab-bio" class="tab-panel" style="display:none">
+    <div style="padding:16px;">
+      <dl style="display:grid;grid-template-columns:auto 1fr;gap:10px 20px;font-size:0.88rem;">
+        <dt style="color:var(--text-muted);font-weight:600">Full Name</dt>
+        <dd>{{ player.name }}</dd>
+        <dt style="color:var(--text-muted);font-weight:600">Date of Birth</dt>
+        <dd>{{ player.dateOfBirth or '—' }}</dd>
+        <dt style="color:var(--text-muted);font-weight:600">Nationality</dt>
+        <dd>{{ player.nationality or '—' }}</dd>
+        <dt style="color:var(--text-muted);font-weight:600">Position</dt>
+        <dd>{{ player.position or '—' }}</dd>
+        <dt style="color:var(--text-muted);font-weight:600">Shirt Number</dt>
+        <dd>{{ player.shirtNumber or '—' }}</dd>
+        {% if player.currentTeam %}
+          <dt style="color:var(--text-muted);font-weight:600">Current Club</dt>
+          <dd>
+            <a href="/team/{{ player.currentTeam.id }}"
+               style="color:var(--cyan);text-decoration:none">
+              {{ player.currentTeam.name }}
+            </a>
+          </dd>
         {% endif %}
-        {% if player.dateOfBirth %}
-          <dt class="col-5 text-muted">Born</dt>
-          <dd class="col-7">{{ player.dateOfBirth }}</dd>
-        {% endif %}
-        {% if player.shirtNumber %}
-          <dt class="col-5 text-muted">Shirt #</dt>
-          <dd class="col-7">{{ player.shirtNumber }}</dd>
-        {% endif %}
-        {% if player.section %}
-          <dt class="col-5 text-muted">Section</dt>
-          <dd class="col-7">{{ player.section }}</dd>
+        {% if player.currentTeam and player.currentTeam.contract %}
+          <dt style="color:var(--text-muted);font-weight:600">Contract</dt>
+          <dd>
+            {{ player.currentTeam.contract.get('start','?') }}
+            → {{ player.currentTeam.contract.get('until','?') }}
+          </dd>
         {% endif %}
       </dl>
     </div>
   </div>
 
-  <!-- Stats + recent matches -->
-  <div class="col-md-8 col-lg-9">
-    <!-- Career stats from current contract if available -->
-    {% if player.currentTeam and player.currentTeam.contract %}
-      {% set contract = player.currentTeam.contract %}
-      <div class="card border-secondary mb-4">
-        <div class="card-header border-secondary fw-semibold">
-          <i class="bi bi-file-earmark-text me-1"></i>Contract
-        </div>
-        <div class="card-body">
-          <div class="row text-center">
-            <div class="col">
-              <div class="text-muted small">Start</div>
-              <div class="fw-bold">{{ contract.start or '—' }}</div>
-            </div>
-            <div class="col">
-              <div class="text-muted small">Until</div>
-              <div class="fw-bold">{{ contract.until or '—' }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    {% endif %}
-
-    <!-- Recent matches -->
-    <div class="card border-secondary">
-      <div class="card-header border-secondary fw-semibold">
-        <i class="bi bi-calendar3 me-1"></i>Recent Matches
-      </div>
-      {% if recent_matches %}
-        <div class="table-responsive">
-          <table class="table table-hover table-dark mb-0 align-middle small">
-            <thead class="table-secondary">
-              <tr>
-                <th class="ps-3">Date</th>
-                <th>Competition</th>
-                <th>Home</th>
-                <th class="text-center">Score</th>
-                <th>Away</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for match in recent_matches %}
-                <tr>
-                  <td class="ps-3 text-muted">{{ match.utcDate[:10] if match.utcDate else '—' }}</td>
-                  <td>{{ match.competition.name if match.competition else '—' }}</td>
-                  <td>
-                    {% if match.homeTeam.crest %}
-                      <img src="{{ match.homeTeam.crest }}" width="16" height="16" style="object-fit:contain" onerror="this.style.display='none'" class="me-1">
-                    {% endif %}
-                    {{ match.homeTeam.shortName or match.homeTeam.name }}
-                  </td>
-                  <td class="text-center fw-bold">
-                    {% if match.score and match.score.fullTime %}
-                      {{ match.score.fullTime.home }} — {{ match.score.fullTime.away }}
-                    {% else %}—{% endif %}
-                  </td>
-                  <td>
-                    {% if match.awayTeam.crest %}
-                      <img src="{{ match.awayTeam.crest }}" width="16" height="16" style="object-fit:contain" onerror="this.style.display='none'" class="me-1">
-                    {% endif %}
-                    {{ match.awayTeam.shortName or match.awayTeam.name }}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="card-body text-muted text-center py-4">No recent match data available.</div>
-      {% endif %}
-    </div>
-  </div>
 </div>
 {% endblock %}

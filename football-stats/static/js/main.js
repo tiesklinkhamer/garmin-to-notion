@@ -1,21 +1,26 @@
-// Keep league selection in sync across page navigations
+// ── Tab switching ─────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const league = params.get("league");
+  const tabBar = document.getElementById("playerTabBar");
+  if (tabBar) {
+    tabBar.addEventListener("click", (e) => {
+      const btn = e.target.closest(".tab-btn");
+      if (!btn) return;
 
-  // Highlight active nav links
-  document.querySelectorAll(".nav-link").forEach(link => {
-    if (link.getAttribute("href") === window.location.pathname) {
-      link.classList.add("active");
-    }
-  });
+      // Deactivate all
+      tabBar.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => (p.style.display = "none"));
 
-  // Propagate league param to nav links so switching pages keeps the league
-  if (league) {
-    document.querySelectorAll("a.nav-link[href='/'], a.nav-link[href='/teams']").forEach(link => {
-      const url = new URL(link.href, window.location.origin);
-      url.searchParams.set("league", league);
-      link.href = url.pathname + url.search;
+      // Activate clicked
+      btn.classList.add("active");
+      const panel = document.getElementById("tab-" + btn.dataset.tab);
+      if (panel) panel.style.display = "";
     });
   }
+
+  // ── Active nav link ──────────────────────────────────────
+  const path = window.location.pathname;
+  document.querySelectorAll(".nav-link").forEach(link => {
+    const href = link.getAttribute("href")?.split("?")[0];
+    if (href === path) link.classList.add("active");
+  });
 });
