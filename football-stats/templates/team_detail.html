@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{{ team.name }} — Football Stats{% endblock %}
+
+{% block content %}
+
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">/</span>
+  <a href="/teams">Teams</a>
+  <span class="sep">/</span>
+  <span>{{ team.shortName or team.name }}</span>
+</div>
+
+<!-- Team header -->
+<div class="card mb-20">
+  <div style="padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+    {% if team.crest %}
+      <img src="{{ team.crest }}" alt="{{ team.name }}" style="width:80px;height:80px;object-fit:contain;">
+    {% else %}
+      <div class="team-crest-fallback" style="width:80px;height:80px;font-size:2rem;">{{ team.name[:1] }}</div>
+    {% endif %}
+    <div style="flex:1;min-width:0">
+      <h1 style="font-size:1.4rem;font-weight:900;margin-bottom:6px;">{{ team.name }}</h1>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:0.8rem;color:var(--text-muted);">
+        {% if team.founded %}
+          <span><i class="bi bi-calendar3"></i> Est. {{ team.founded }}</span>
+        {% endif %}
+        {% if team.venue %}
+          <span><i class="bi bi-geo-alt"></i> {{ team.venue }}</span>
+        {% endif %}
+        {% if team.area and team.area.name %}
+          <span><i class="bi bi-globe"></i> {{ team.area.name }}</span>
+        {% endif %}
+        {% if team.clubColors %}
+          <span><i class="bi bi-palette"></i> {{ team.clubColors }}</span>
+        {% endif %}
+        {% if team.website %}
+          <a href="{{ team.website }}" target="_blank" style="color:var(--cyan);text-decoration:none;">
+            <i class="bi bi-link-45deg"></i> Website
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <!-- Squad stats strip -->
+  <div class="team-stat-strip">
+    {% set gk_count  = squad | selectattr('position','equalto','Goalkeeper') | list | length %}
+    {% set def_count = squad | selectattr('position','equalto','Defence')    | list | length %}
+    {% set mid_count = squad | selectattr('position','equalto','Midfield')   | list | length %}
+    {% set fwd_count = squad | selectattr('position','equalto','Offence')    | list | length %}
+    <div class="team-stat-pill">
+      <span class="tsp-val">{{ squad | length }}</span>
+      <span class="tsp-lbl">Squad</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--yellow)">
+      <span class="tsp-val">{{ gk_count }}</span>
+      <span class="tsp-lbl">GK</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--blue)">
+      <span class="tsp-val">{{ def_count }}</span>
+      <span class="tsp-lbl">DEF</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--green)">
+      <span class="tsp-val">{{ mid_count }}</span>
+      <span class="tsp-lbl">MID</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--red)">
+      <span class="tsp-val">{{ fwd_count }}</span>
+      <span class="tsp-lbl">FWD</span>
+    </div>
+  </div>
+
+  <!-- Active competitions -->
+  {% if team.runningCompetitions %}
+    <div style="padding:0 20px 16px;display:flex;flex-wrap:wrap;gap:8px;">
+      {% for comp in team.runningCompetitions %}
+        {% if comp.code and comp.code in ['PL','PD','BL1','SA','FL1'] %}
+          <a href="/?league={{ comp.code }}"
+             style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;
+                    font-size:0.75rem;font-weight:700;background:var(--bg-raised);
+                    color:var(--text-muted);text-decoration:none;border:1px solid var(--border);">
+            {{ comp.name }}
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<!-- Form & Stats -->
+{% if form_stats and form_stats.results %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+
+  <!-- Key stats -->
+  <div class="card">
+    <div class="card-head"><i class="bi bi-bar-chart-line-fill" style="color:var(--yellow)"></i> Season Stats (Last 15)</div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">Win Rate</span>
+      <span class="fc-stat-val {% if form_stats.win_pct >= 50 %}fc-good{% elif form_stats.win_pct >= 33 %}fc-warn{% else %}fc-bad{% endif %}">{{ form_stats.win_pct }}%</span>
+    </div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">Avg Scored</span>
+      <span class="fc-stat-val {% if form_stats.avg_scored >= 1.5 %}fc-good{% elif form_stats.avg_scored >= 1.0 %}fc-warn{% else %}fc-bad{% endif %}">{{ form_stats.avg_scored }}</span>
+    </div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">Avg Conceded</span>
+      <span class="fc-stat-val {% if form_stats.avg_conceded <= 1.0 %}fc-good{% elif form_stats.avg_conceded <= 1.5 %}fc-warn{% else %}fc-bad{% endif %}">{{ form_stats.avg_conceded }}</span>
+    </div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">Clean Sheets</span>
+      <span class="fc-stat-val {% if form_stats.cs_pct >= 40 %}fc-good{% elif form_stats.cs_pct >= 20 %}fc-warn{% else %}fc-bad{% endif %}">{{ form_stats.cs_pct }}%</span>
+    </div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">BTTS</span>
+      <span class="fc-stat-val {% if form_stats.btts_pct >= 60 %}fc-good{% elif form_stats.btts_pct >= 40 %}fc-warn{% else %}fc-bad{% endif %}">{{ form_stats.btts_pct }}%</span>
+    </div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">Over 2.5</span>
+      <span class="fc-stat-val {% if form_stats.over_2_5_pct >= 60 %}fc-good{% elif form_stats.over_2_5_pct >= 40 %}fc-warn{% else %}fc-bad{% endif %}">{{ form_stats.over_2_5_pct }}%</span>
+    </div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">Over 1.5</span>
+      <span class="fc-stat-val">{{ form_stats.over_1_5_pct }}%</span>
+    </div>
+    <div class="fc-stat-row" style="padding:9px 16px;">
+      <span class="fc-stat-label">Over 3.5</span>
+      <span class="fc-stat-val">{{ form_stats.over_3_5_pct }}%</span>
+    </div>
+  </div>
+
+  <!-- Recent results -->
+  <div class="card">
+    <div class="card-head"><i class="bi bi-clock-history" style="color:var(--cyan)"></i> Recent Results</div>
+    {% for r in form_stats.results[:10] %}
+      {% set m = r.match %}
+      {% set ht = m.homeTeam or {} %}
+      {% set at = m.awayTeam or {} %}
+      <div class="match-result-row">
+        <span class="res-badge {{ r.result }}">{{ r.result }}</span>
+        <span class="mr-venue">{{ 'H' if r.is_home else 'A' }}</span>
+        <span class="mr-opponent">
+          {% if r.is_home %}{{ at.shortName or at.name or '?' }}
+          {% else %}{{ ht.shortName or ht.name or '?' }}{% endif %}
+        </span>
+        <span class="mr-score" style="color:{% if r.result=='W' %}var(--green){% elif r.result=='D' %}var(--text-muted){% else %}var(--red){% endif %}">
+          {{ r.scored }}–{{ r.conceded }}
+        </span>
+      </div>
+    {% endfor %}
+    <!-- Predict button -->
+    <div style="padding:12px 16px;">
+      <a href="/predict?league={{ league_code }}&home_id={{ team_id }}"
+         style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;
+                background:var(--yellow);color:#111827;font-size:0.8rem;font-weight:800;text-decoration:none;">
+        <i class="bi bi-calculator-fill"></i> Predict a match
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Home / Away split -->
+{% if home_ha or away_ha %}
+<div class="card mb-20">
+  <div class="card-head"><i class="bi bi-house-door-fill" style="color:var(--yellow)"></i> Home / Away Split (Season)</div>
+  <table class="ha-split-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>P</th>
+        <th>W</th>
+        <th>D</th>
+        <th>L</th>
+        <th>Avg GF</th>
+        <th>Avg GA</th>
+        <th>PPG</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if home_ha %}
+      <tr>
+        <td class="ha-home"><i class="bi bi-house-fill"></i> Home</td>
+        <td>{{ home_ha.played }}</td>
+        <td style="color:var(--green);font-weight:800;">{{ home_ha.won }}</td>
+        <td>{{ home_ha.draw }}</td>
+        <td style="color:var(--red)">{{ home_ha.lost }}</td>
+        <td class="ha-home">{{ home_ha.avg_scored }}</td>
+        <td class="ha-home">{{ home_ha.avg_conceded }}</td>
+        <td style="font-weight:800;">{{ "%.2f"|format(home_ha.pts / home_ha.played) }}</td>
+      </tr>
+      {% endif %}
+      {% if away_ha %}
+      <tr>
+        <td class="ha-away"><i class="bi bi-airplane-fill"></i> Away</td>
+        <td>{{ away_ha.played }}</td>
+        <td style="color:var(--green);font-weight:800;">{{ away_ha.won }}</td>
+        <td>{{ away_ha.draw }}</td>
+        <td style="color:var(--red)">{{ away_ha.lost }}</td>
+        <td class="ha-away">{{ away_ha.avg_scored }}</td>
+        <td class="ha-away">{{ away_ha.avg_conceded }}</td>
+        <td style="font-weight:800;">{{ "%.2f"|format(away_ha.pts / away_ha.played) }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Squad by position -->
+{% set positions = [('Goalkeeper','GK','pos-gk'),('Defence','DEF','pos-def'),('Midfield','MID','pos-mid'),('Offence','FWD','pos-fwd')] %}
+{% for pos_key, pos_label, pos_cls in positions %}
+  {% set members = squad | selectattr('position', 'equalto', pos_key) | list %}
+  {% if members %}
+    <div class="card mb-20">
+      <div class="card-head">
+        {% if pos_key == 'Goalkeeper' %}<i class="bi bi-hand-index-thumb" style="color:var(--yellow)"></i>
+        {% elif pos_key == 'Defence'   %}<i class="bi bi-shield-fill" style="color:var(--blue)"></i>
+        {% elif pos_key == 'Midfield'  %}<i class="bi bi-arrow-left-right" style="color:var(--green)"></i>
+        {% else                        %}<i class="bi bi-fire" style="color:var(--red)"></i>{% endif %}
+        {{ pos_key }}s
+        <span style="margin-left:6px;font-size:0.72rem;font-weight:500;color:var(--text-muted)">{{ members | length }}</span>
+      </div>
+      {% for player in members %}
+        <a href="/player/{{ player.id }}" class="player-row">
+          <span class="player-num">{{ player.shirtNumber or '—' }}</span>
+          <span class="pos-badge {{ pos_cls }}">{{ pos_label }}</span>
+          <div class="player-main">
+            <div class="player-name-text">{{ player.name }}</div>
+            <div class="player-sub">
+              {% set f = player.nationality | flag %}
+              {% if f %}{{ f }} {% endif %}{{ player.nationality or '' }}
+            </div>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">{{ player.dateOfBirth or '' }}</div>
+          <i class="bi bi-chevron-right" style="color:var(--text-muted);font-size:0.75rem;flex-shrink:0;margin-left:8px;"></i>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endfor %}
+
+{% if not squad %}
+  <div style="text-align:center;padding:60px;color:var(--text-muted)">No squad data available.</div>
+{% endif %}
+
+{% endblock %}

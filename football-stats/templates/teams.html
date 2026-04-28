@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Teams — {{ league.flag }} {{ league.name }}{% endblock %}
+
+{% block content %}
+
+<div class="sec-header mb-16">
+  <div class="sec-title">
+    {{ league.flag }} {{ league.name }}
+    <span style="font-size:0.8rem;color:var(--text-muted);font-weight:500">{{ teams | length }} clubs</span>
+  </div>
+  <a href="/?league={{ league_code }}" class="sec-link">
+    <i class="bi bi-bar-chart-fill"></i> Stats &amp; Standings
+  </a>
+</div>
+
+<div class="team-grid">
+  {% for team in teams %}
+    <a href="/team/{{ team.id }}" class="team-card">
+      {% if team.crest %}
+        <img src="{{ team.crest }}" class="team-crest" alt="{{ team.name }}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="team-crest-fallback" style="display:none">{{ team.name[:1] }}</div>
+      {% else %}
+        <div class="team-crest-fallback">{{ team.name[:1] }}</div>
+      {% endif %}
+      <div class="team-name">{{ team.shortName or team.name }}</div>
+      {% if team.founded %}
+        <div class="team-meta">Est. {{ team.founded }}</div>
+      {% endif %}
+      {% if team.venue %}
+        <div class="team-meta"><i class="bi bi-geo-alt"></i> {{ team.venue }}</div>
+      {% endif %}
+    </a>
+  {% else %}
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">No teams found.</div>
+  {% endfor %}
+</div>
+
+{% endblock %}

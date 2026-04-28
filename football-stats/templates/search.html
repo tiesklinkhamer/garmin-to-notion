@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Search: {{ query }} — Football Stats{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom:20px;">
+  <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:6px;">
+    <i class="bi bi-search"></i> Interpreted as: players, teams matching "{{ query }}"
+  </div>
+  <h1 style="font-size:1.3rem;font-weight:900;">
+    Results for <span style="color:var(--yellow)">"{{ query }}"</span>
+  </h1>
+</div>
+
+{% if player_results %}
+  <div style="margin-bottom:8px;" class="sec-header">
+    <div class="sec-title"><i class="bi bi-person-fill"></i> Players</div>
+    <span style="font-size:0.8rem;color:var(--text-muted)">{{ player_results | length }} found</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+    {% for r in player_results %}
+      <a href="/player/{{ r.player.id }}" class="result-player">
+        <div class="result-avatar">{{ r.player.name | initials }}</div>
+        <div class="result-info">
+          <div class="result-name">{{ r.player.name }}</div>
+          <div class="result-sub">
+            {% if r.team %}{{ r.team.shortName or r.team.name }}{% endif %}
+            {% if r.player.nationality %} · {{ r.player.nationality }}{% endif %}
+            &nbsp;
+            <span class="badge-league">{{ r.league.flag }} {{ r.league.short }}</span>
+          </div>
+        </div>
+        <div class="result-stats">
+          <div class="result-stat">
+            <span class="rv" style="color:var(--yellow)">{{ r.goals or 0 }}</span>
+            <span class="rl">Goals</span>
+          </div>
+          <div class="result-stat">
+            <span class="rv" style="color:var(--cyan)">{{ r.assists or 0 }}</span>
+            <span class="rl">Ast</span>
+          </div>
+          <div class="result-stat">
+            <span class="rv" style="color:var(--text-muted)">{{ r.matches or '—' }}</span>
+            <span class="rl">Games</span>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if team_results %}
+  <div class="sec-header mb-16">
+    <div class="sec-title"><i class="bi bi-shield-fill"></i> Teams</div>
+    <span style="font-size:0.8rem;color:var(--text-muted)">{{ team_results | length }} found</span>
+  </div>
+  <div class="team-grid">
+    {% for r in team_results %}
+      <a href="/team/{{ r.team.id }}" class="team-card">
+        {% if r.team.crest %}
+          <img src="{{ r.team.crest }}" class="team-crest" alt="" onerror="this.style.display='none'">
+        {% else %}
+          <div class="team-crest-fallback">{{ r.team.name[:1] }}</div>
+        {% endif %}
+        <div class="team-name">{{ r.team.shortName or r.team.name }}</div>
+        <span class="badge-league">{{ r.league.flag }} {{ r.league.short }}</span>
+      </a>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if not player_results and not team_results %}
+  <div style="text-align:center;padding:60px 20px;">
+    <div style="font-size:2.5rem;margin-bottom:12px;">🔍</div>
+    <div style="font-size:1rem;font-weight:700;margin-bottom:8px;">No results for "{{ query }}"</div>
+    <div style="color:var(--text-muted);font-size:0.88rem;">
+      Try searching by player name, nationality, or team name.
+      Results are drawn from the top scorers of each league.
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}Match Predictor — Football Stats{% endblock %}
+
+{% block content %}
+
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">/</span>
+  <span>Match Predictor</span>
+</div>
+
+<!-- League stats bar (loaded via JS) -->
+<div class="league-stats-bar" id="leagueStatsBar">
+  <div class="lsb-cell"><span class="lsb-val" id="lsb-avg">—</span><span class="lsb-lbl">Avg Goals / Game</span></div>
+  <div class="lsb-cell"><span class="lsb-val" id="lsb-btts">—</span><span class="lsb-lbl">BTTS %</span></div>
+  <div class="lsb-cell"><span class="lsb-val" id="lsb-o25">—</span><span class="lsb-lbl">Over 2.5 %</span></div>
+  <div class="lsb-cell"><span class="lsb-val" id="lsb-hw">—</span><span class="lsb-lbl">Home Win %</span></div>
+  <div class="lsb-cell"><span class="lsb-val" id="lsb-d">—</span><span class="lsb-lbl">Draw %</span></div>
+  <div class="lsb-cell"><span class="lsb-val" id="lsb-aw">—</span><span class="lsb-lbl">Away Win %</span></div>
+</div>
+
+<!-- Team selector -->
+<div class="card mb-20">
+  <form method="get" action="/predict" id="predictForm">
+    <input type="hidden" name="league" value="{{ league_code }}">
+    <div class="predict-selector">
+      <!-- Home team -->
+      <div class="predict-select-col">
+        <label><i class="bi bi-house-fill"></i> Home Team</label>
+        <select name="home_id" id="homeSelect">
+          <option value="">— Select home team —</option>
+          {% for t in teams %}
+            <option value="{{ t.id }}" {% if t.id == home_id %}selected{% endif %}>
+              {{ t.shortName or t.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="vs-badge">VS</div>
+
+      <!-- Away team -->
+      <div class="predict-select-col">
+        <label><i class="bi bi-airplane-fill"></i> Away Team</label>
+        <select name="away_id" id="awaySelect">
+          <option value="">— Select away team —</option>
+          {% for t in teams %}
+            <option value="{{ t.id }}" {% if t.id == away_id %}selected{% endif %}>
+              {{ t.shortName or t.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="predict-btn">
+      <i class="bi bi-calculator-fill"></i> Analyse Match
+    </button>
+  </form>
+</div>
+
+{% if prediction and not prediction.error %}
+
+<!-- ── Outcome probabilities ─────────────────────────────────────────────── -->
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-bar-chart-fill" style="color:var(--yellow)"></i>
+    Outcome Probabilities
+  </div>
+
+  <div class="outcome-grid">
+    <div class="outcome-cell">
+      {% if home_team %}
+        <img src="{{ home_team.crest }}" style="width:36px;height:36px;object-fit:contain;" alt="{{ home_team.name }}">
+      {% endif %}
+      <span class="outcome-pct home">{{ prediction.home_win_pct }}%</span>
+      <span class="outcome-label">{{ (home_team.shortName or home_team.name) if home_team else 'Home' }}</span>
+    </div>
+    <div class="outcome-cell">
+      <span style="font-size:1.8rem;line-height:1;color:var(--text-muted);">=</span>
+      <span class="outcome-pct draw">{{ prediction.draw_pct }}%</span>
+      <span class="outcome-label">Draw</span>
+    </div>
+    <div class="outcome-cell">
+      {% if away_team %}
+        <img src="{{ away_team.crest }}" style="width:36px;height:36px;object-fit:contain;" alt="{{ away_team.name }}">
+      {% endif %}
+      <span class="outcome-pct away">{{ prediction.away_win_pct }}%</span>
+      <span class="outcome-label">{{ (away_team.shortName or away_team.name) if away_team else 'Away' }}</span>
+    </div>
+  </div>
+
+  <!-- Stacked outcome bar -->
+  <div style="padding: 0 20px 16px; display:flex; gap:3px;">
+    <div class="outcome-bar-seg home" style="width:{{ prediction.home_win_pct }}%; min-width:4px;"></div>
+    <div class="outcome-bar-seg draw" style="width:{{ prediction.draw_pct }}%; min-width:4px; background:var(--bg-surface);"></div>
+    <div class="outcome-bar-seg away" style="width:{{ prediction.away_win_pct }}%; min-width:4px;"></div>
+  </div>
+
+  <!-- Expected Goals -->
+  <div class="xg-row">
+    <div class="xg-team">
+      <span class="xg-val">{{ prediction.home_xg }}</span>
+      <span class="xg-lbl">xG {{ (home_team.shortName or home_team.name) if home_team else 'Home' }}</span>
+    </div>
+    <span class="xg-divider">Expected Goals</span>
+    <div class="xg-team" style="align-items:center;">
+      <span class="xg-val">{{ prediction.away_xg }}</span>
+      <span class="xg-lbl">xG {{ (away_team.shortName or away_team.name) if away_team else 'Away' }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Goal markets ──────────────────────────────────────────────────────── -->
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-grid-3x3-gap-fill" style="color:var(--cyan)"></i>
+    Goal Markets
+  </div>
+  <div class="market-grid">
+
+    {% set markets = [
+      ("BTTS",    prediction.btts_pct),
+      ("Over 1.5", prediction.over_1_5_pct),
+      ("Over 2.5", prediction.over_2_5_pct),
+      ("Over 3.5", prediction.over_3_5_pct),
+      ("Over 4.5", prediction.over_4_5_pct),
+      ("Under 2.5", 100 - prediction.over_2_5_pct),
+    ] %}
+
+    {% for name, pct in markets %}
+      {% if pct >= 65 %}
+        {% set cls = "high" %}
+      {% elif pct >= 40 %}
+        {% set cls = "mid" %}
+      {% else %}
+        {% set cls = "low" %}
+      {% endif %}
+      <div class="market-tile">
+        <span class="market-name">{{ name }}</span>
+        <span class="market-pct {{ cls }}">{{ pct }}%</span>
+        <div class="market-bar-bg">
+          <div class="market-bar-fill" style="width:{{ pct }}%;{% if cls == 'high' %}background:var(--green){% elif cls == 'mid' %}background:var(--yellow){% else %}background:var(--text-muted){% endif %}"></div>
+        </div>
+      </div>
+    {% endfor %}
+
+  </div>
+</div>
+
+<!-- ── Most likely scores ────────────────────────────────────────────────── -->
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-trophy-fill" style="color:var(--yellow)"></i>
+    Most Likely Scores
+  </div>
+  <div class="score-grid">
+    {% for (hg, ag), pct in prediction.top_scores %}
+      <div class="score-tile {% if (hg, ag) == prediction.best_score %}best{% endif %}">
+        <div class="score-val">{{ hg }}–{{ ag }}</div>
+        <div class="score-prob">{{ pct }}%</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ── Team form comparison ──────────────────────────────────────────────── -->
+{% if home_form and away_form %}
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-activity" style="color:var(--green)"></i>
+    Form Comparison (Last 15 Matches)
+  </div>
+  <div class="form-compare-grid">
+    <!-- Home team -->
+    <div class="form-compare-col">
+      <div class="fc-header">
+        {% if home_team %}<img src="{{ home_team.crest }}" style="width:22px;height:22px;object-fit:contain" alt="">{% endif %}
+        <span class="fc-team-name">{{ (home_team.shortName or home_team.name) if home_team else 'Home' }}</span>
+      </div>
+      <div class="fc-stat-row">
+        <span class="fc-stat-label">Win Rate</span>
+        <span class="fc-stat-val {% if home_form.win_pct >= 50 %}fc-good{% elif home_form.win_pct >= 33 %}fc-warn{% else %}fc-bad{% endif %}">{{ home_form.win_pct }}%</span>
+      </div>
+      <div class="fc-stat-row">
+        <span class="fc-stat-label">Avg Scored</span>
+        <span class="fc-stat-val {% if home_form.avg_scored >= 1.5 %}fc-good{% elif home_form.avg_scored >= 1.0 %}fc-warn{% else %}fc-bad{% endif %}">{{ home_form.avg_scored }}</span>
+      </div>
+      <div class="fc-stat-row">
+        <span class="fc-stat-label">Avg Conceded</span>
+        <span class="fc-stat-val {% if home_form.avg_conceded <= 1.0 %}fc-good{% elif home_form.avg_conceded <= 1.5 %}fc-warn{% else %}fc-bad{% endif %}">{{ home_form.avg_conceded }}</span>
+      </div>
+      <div class="fc-stat-row">
+        <span class="fc-stat-label">Clean Sheets</span>
+        <span class="fc-stat-val {% if home_form.cs_pct >= 40 %}fc-good{% elif home_form.cs_pct >= 20 %}fc-warn{% else %}fc-bad{% endif %}">{{ home_form.cs_pct }}%</span>
+      </div>
+      <div class="fc-stat-row">
+        <span class="fc-stat-label">BTTS</span>
+        <span class="fc-stat-val {% if home_form.btts_pct >= 60 %}fc-good{% elif home_form.btts_pct >= 40 %}fc-warn{% else %}fc-bad{% endif %}">{{ home_form.btts_pct }}%</span>
+      </div>
+      <div class="fc-stat-row">
+        <span class="fc-stat-label">Over 2.5</span>
+        <span class="fc-stat-val {% if home_form.over_2_5_pct >= 60 %}fc-good{% elif home_form.over_2_5_pct >= 40 %}fc-warn{% else %}fc-bad{% endif %}">{{ home_form.over_2_5_pct }}%</span>
+      </div>
+      <!-- Form dots -->
+      <div style="margin-top:10px;">
+        <div class="fc-stat-label" style="margin-bottom:5px;">Recent form</div>
+        <div class="form-dots">
+          {% for char, cls in home_form.form_str | form_dots %}
+            <div class="form-dot {{ cls }}" title="{{ char }}"></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Away team -->
+    <div class="form-compare-col right">
+      <div class="fc-header" style="justify-content:flex-end;">
+        <span class="fc-team-name">{{ (away_team.shortName or away_team.name) if away_team else 'Away' }}</span>
+        {% if away_team %}<img src="{{ away_team.crest }}" style="width:22px;height:22px;object-fit:contain" alt="">{% endif %}
+      </div>
+      <div class="fc-stat-row" style="flex-direction:row-reverse;">
+        <span class="fc-stat-label">Win Rate</span>
+        <span class="fc-stat-val {% if away_form.win_pct >= 50 %}fc-good{% elif away_form.win_pct >= 33 %}fc-warn{% else %}fc-bad{% endif %}">{{ away_form.win_pct }}%</span>
+      </div>
+      <div class="fc-stat-row" style="flex-direction:row-reverse;">
+        <span class="fc-stat-label">Avg Scored</span>
+        <span class="fc-stat-val {% if away_form.avg_scored >= 1.5 %}fc-good{% elif away_form.avg_scored >= 1.0 %}fc-warn{% else %}fc-bad{% endif %}">{{ away_form.avg_scored }}</span>
+      </div>
+      <div class="fc-stat-row" style="flex-direction:row-reverse;">
+        <span class="fc-stat-label">Avg Conceded</span>
+        <span class="fc-stat-val {% if away_form.avg_conceded <= 1.0 %}fc-good{% elif away_form.avg_conceded <= 1.5 %}fc-warn{% else %}fc-bad{% endif %}">{{ away_form.avg_conceded }}</span>
+      </div>
+      <div class="fc-stat-row" style="flex-direction:row-reverse;">
+        <span class="fc-stat-label">Clean Sheets</span>
+        <span class="fc-stat-val {% if away_form.cs_pct >= 40 %}fc-good{% elif away_form.cs_pct >= 20 %}fc-warn{% else %}fc-bad{% endif %}">{{ away_form.cs_pct }}%</span>
+      </div>
+      <div class="fc-stat-row" style="flex-direction:row-reverse;">
+        <span class="fc-stat-label">BTTS</span>
+        <span class="fc-stat-val {% if away_form.btts_pct >= 60 %}fc-good{% elif away_form.btts_pct >= 40 %}fc-warn{% else %}fc-bad{% endif %}">{{ away_form.btts_pct }}%</span>
+      </div>
+      <div class="fc-stat-row" style="flex-direction:row-reverse;">
+        <span class="fc-stat-label">Over 2.5</span>
+        <span class="fc-stat-val {% if away_form.over_2_5_pct >= 60 %}fc-good{% elif away_form.over_2_5_pct >= 40 %}fc-warn{% else %}fc-bad{% endif %}">{{ away_form.over_2_5_pct }}%</span>
+      </div>
+      <div style="margin-top:10px; text-align:right;">
+        <div class="fc-stat-label" style="margin-bottom:5px;">Recent form</div>
+        <div class="form-dots" style="justify-content:flex-end;">
+          {% for char, cls in away_form.form_str | form_dots %}
+            <div class="form-dot {{ cls }}" title="{{ char }}"></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Home / Away split ─────────────────────────────────────────────────── -->
+{% if home_ha_stats and away_ha_stats %}
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-house-door-fill" style="color:var(--yellow)"></i>
+    Home / Away Performance (Season)
+  </div>
+  <table class="ha-split-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th class="ha-home">Home</th>
+        <th class="ha-home">Avg Scored</th>
+        <th class="ha-home">Avg Conceded</th>
+        <th></th>
+        <th class="ha-away">Away</th>
+        <th class="ha-away">Avg Scored</th>
+        <th class="ha-away">Avg Conceded</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ (home_team.shortName or home_team.name) if home_team else 'Home' }}</td>
+        {% set hh = home_ha_stats.home %}
+        <td>{% if hh %}{{ hh.won }}W {{ hh.draw }}D {{ hh.lost }}L{% else %}—{% endif %}</td>
+        <td class="ha-home">{% if hh %}{{ hh.avg_scored }}{% else %}—{% endif %}</td>
+        <td class="ha-home">{% if hh %}{{ hh.avg_conceded }}{% else %}—{% endif %}</td>
+        <td>{{ (away_team.shortName or away_team.name) if away_team else 'Away' }}</td>
+        {% set ah = away_ha_stats.away %}
+        <td>{% if ah %}{{ ah.won }}W {{ ah.draw }}D {{ ah.lost }}L{% else %}—{% endif %}</td>
+        <td class="ha-away">{% if ah %}{{ ah.avg_scored }}{% else %}—{% endif %}</td>
+        <td class="ha-away">{% if ah %}{{ ah.avg_conceded }}{% else %}—{% endif %}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- ── Recent results ────────────────────────────────────────────────────── -->
+{% if home_form and away_form %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+  {% for team_obj, form in [(home_team, home_form), (away_team, away_form)] %}
+  <div class="card">
+    <div class="card-head" style="font-size:0.82rem;">
+      {% if team_obj %}<img src="{{ team_obj.crest }}" style="width:18px;height:18px;object-fit:contain;margin-right:4px;" alt="">{% endif %}
+      {{ (team_obj.shortName or team_obj.name) if team_obj else 'Team' }} — Last Results
+    </div>
+    {% for r in form.results[:8] %}
+      {% set m = r.match %}
+      {% set ht = m.homeTeam or {} %}
+      {% set at = m.awayTeam or {} %}
+      <div class="match-result-row">
+        <span class="res-badge {{ r.result }}">{{ r.result }}</span>
+        <span class="mr-venue">{{ 'H' if r.is_home else 'A' }}</span>
+        <span class="mr-opponent">
+          {% if r.is_home %}{{ at.shortName or at.name or '?' }}
+          {% else %}{{ ht.shortName or ht.name or '?' }}{% endif %}
+        </span>
+        <span class="mr-score">{{ r.scored }}–{{ r.conceded }}</span>
+      </div>
+    {% else %}
+      <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No data</div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% elif prediction and prediction.error %}
+<div class="card mb-20" style="padding:24px;">
+  <p style="color:var(--red)"><i class="bi bi-exclamation-triangle-fill"></i> Prediction error: {{ prediction.error }}</p>
+</div>
+{% else %}
+<div class="predict-empty">
+  <i class="bi bi-calculator"></i>
+  <p>Select a home and away team above to generate an AI-powered match analysis including outcome probabilities, expected goals, goal markets, and team form comparison.</p>
+</div>
+{% endif %}
+
+<script>
+(function() {
+  // Load league stats bar
+  const lc = "{{ league_code }}";
+  fetch(`/api/league-stats?league=${lc}`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) return;
+      document.getElementById('lsb-avg').textContent  = d.total_avg;
+      document.getElementById('lsb-btts').textContent = d.btts_pct + '%';
+      document.getElementById('lsb-o25').textContent  = d.over_2_5_pct + '%';
+      document.getElementById('lsb-hw').textContent   = d.home_win_pct + '%';
+      document.getElementById('lsb-d').textContent    = d.draw_pct + '%';
+      document.getElementById('lsb-aw').textContent   = d.away_win_pct + '%';
+    })
+    .catch(() => {});
+
+  // Prevent selecting same team for both
+  const homeEl = document.getElementById('homeSelect');
+  const awayEl = document.getElementById('awaySelect');
+  function syncSelects() {
+    const hVal = homeEl.value;
+    const aVal = awayEl.value;
+    [...awayEl.options].forEach(o => o.disabled = (o.value && o.value === hVal));
+    [...homeEl.options].forEach(o => o.disabled = (o.value && o.value === aVal));
+  }
+  homeEl.addEventListener('change', syncSelects);
+  awayEl.addEventListener('change', syncSelects);
+  syncSelects();
+})();
+</script>
+
+{% endblock %}
