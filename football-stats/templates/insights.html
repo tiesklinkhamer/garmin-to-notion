@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% block title %}Insights — {{ league.flag }} {{ league.name }}{% endblock %}
+
+{% block content %}
+
+<!-- Header ──────────────────────────────────────────────────────────── -->
+<div class="sec-header mb-20">
+  <div>
+    <h1 style="font-size:1.4rem;font-weight:900;margin-bottom:4px">
+      {{ league.flag }} {{ league.name }} — Insights
+    </h1>
+    <div style="font-size:0.8rem;color:var(--text-muted)">
+      {{ insights.games_played }} games played &nbsp;·&nbsp;
+      {{ insights.games_remaining }} remaining &nbsp;·&nbsp;
+      {{ insights.season_games }}-game season
+    </div>
+  </div>
+  <a href="/?league={{ league_code }}" class="sec-link">← Back</a>
+</div>
+
+<!-- ── Quick insight pills ──────────────────────────────────────────── -->
+<div class="insight-strip">
+
+  <!-- Best Pace -->
+  {% if insights.best_pace %}
+    {% set bp = insights.best_pace %}
+    <a href="/player/{{ bp.player.id }}" class="insight-pill">
+      <div class="ip-label" style="color:var(--yellow)">🔥 Best season pace</div>
+      <div class="ip-name">{{ bp.player.name }}</div>
+      <div class="ip-value" style="color:var(--yellow)">{{ bp.projected_goals }}</div>
+      <div class="ip-sub">
+        Projected goals · {{ bp.gpg }} per game<br>
+        {{ bp.goals }} scored in {{ bp.playedMatches }} games
+      </div>
+    </a>
+  {% endif %}
+
+  <!-- Top Creator -->
+  {% if insights.top_creator %}
+    {% set tc = insights.top_creator %}
+    <a href="/player/{{ tc.player.id }}" class="insight-pill">
+      <div class="ip-label" style="color:var(--cyan)">🎯 Most creative</div>
+      <div class="ip-name">{{ tc.player.name }}</div>
+      <div class="ip-value" style="color:var(--cyan)">{{ tc.involvement }}</div>
+      <div class="ip-sub">
+        G+A per game · {{ tc.goals }}G + {{ tc.assists or 0 }}A<br>
+        Projected: {{ tc.projected_goals }}G + {{ tc.projected_assists }}A
+      </div>
+    </a>
+  {% endif %}
+
+  <!-- Hidden Gem -->
+  {% if insights.hidden_gem %}
+    {% set hg = insights.hidden_gem %}
+    <a href="/player/{{ hg.player.id }}" class="insight-pill">
+      <div class="ip-label" style="color:var(--green)">💎 Hidden gem</div>
+      <div class="ip-name">{{ hg.player.name }}</div>
+      <div class="ip-value" style="color:var(--green)">{{ hg.gpg }}</div>
+      <div class="ip-sub">
+        Goals/game · ranked #{{ hg.rank }} in total goals<br>
+        One of top-3 for efficiency, overlooked
+      </div>
+    </a>
+  {% else %}
+    <!-- fallback: show 3rd by involvement if no hidden gem -->
+    {% if insights.by_involvement | length >= 3 %}
+      {% set hg = insights.by_involvement[2] %}
+      <a href="/player/{{ hg.player.id }}" class="insight-pill">
+        <div class="ip-label" style="color:var(--green)">💎 Under the radar</div>
+        <div class="ip-name">{{ hg.player.name }}</div>
+        <div class="ip-value" style="color:var(--green)">{{ hg.involvement }}</div>
+        <div class="ip-sub">
+          G+A per game &nbsp;·&nbsp; rated {{ hg.rating }}/10<br>
+          Ranked #{{ hg.rank }} by goals, top-3 by output
+        </div>
+      </a>
+    {% endif %}
+  {% endif %}
+
+</div>
+
+
+<!-- ── Title race ────────────────────────────────────────────────────── -->
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-trophy-fill" style="color:var(--yellow)"></i>
+    Title Race
+    <span style="margin-left:auto;font-size:0.72rem;font-weight:500;color:var(--text-muted)">
+      {{ insights.games_remaining }} games left
+    </span>
+  </div>
+
+  {% for t in insights.team_stats[:8] %}
+    {% if t.title_prob > 0 %}
+      <div class="title-race-row">
+        <span class="tr-pos">{{ t.position }}</span>
+        {% if t.team.crest %}
+          <img src="{{ t.team.crest }}" class="tr-crest" onerror="this.style.display='none'">
+        {% endif %}
+        <span class="tr-name">
+          <a href="/team/{{ t.team.id }}" style="text-decoration:none;color:inherit">
+            {{ t.team.shortName or t.team.name }}
+          </a>
+        </span>
+        <!-- Form dots -->
+        {% if t.form_str %}
+          <div class="form-dots" style="margin-right:8px">
+            {% for c, cls in t.form_str | form_dots %}
+              <span class="form-dot {{ cls }}" title="{{ c }}"></span>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <!-- Prob bar -->
+        <div class="tr-bar-wrap">
+          <div class="tr-bar-bg">
+            <div class="tr-bar-fill"
+                 style="width:{{ t.title_prob }}%;
+                        background:{% if t.position == 1 %}var(--yellow){% elif t.position == 2 %}var(--cyan){% else %}var(--blue){% endif %}">
+            </div>
+          </div>
+        </div>
+        <span class="tr-pts">→ {{ t.projected_pts }}pts</span>
+        <span class="tr-prob"
+              style="color:{% if t.title_prob >= 50 %}var(--yellow){% elif t.title_prob >= 20 %}var(--cyan){% else %}var(--text-muted){% endif %}">
+          {{ t.title_prob }}%
+        </span>
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <div style="padding:10px 16px;font-size:0.7rem;color:var(--text-muted);border-top:1px solid var(--border)">
+    Probability based on current points gap, games remaining, and recent form trend.
+    Dots = last {{ insights.team_stats[0].form_str | length if insights.team_stats else 5 }} matches.
+  </div>
+</div>
+
+
+<!-- ── Scorer projections ────────────────────────────────────────────── -->
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-graph-up-arrow" style="color:var(--orange)"></i>
+    Scorer Projections — full {{ insights.season_games }}-game season
+  </div>
+  <div style="overflow-x:auto">
+    <table class="proj-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th title="Current goals">G</th>
+          <th title="Current assists">A</th>
+          <th title="Goals per game">G/Gm</th>
+          <th title="Projected goals at current pace">Proj Goals</th>
+          <th title="Projected assists">Proj Ast</th>
+          <th title="Goals+Assists per game">G+A/Gm</th>
+          <th title="Player rating 0–10">Rating</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in insights.scorer_stats %}
+          <tr>
+            <td>{{ s.rank }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                {% if s.team and s.team.crest %}
+                  <img src="{{ s.team.crest }}" style="width:16px;height:16px;object-fit:contain" onerror="this.style.display='none'">
+                {% endif %}
+                <a href="/player/{{ s.player.id }}">
+                  {{ s.player.name }}
+                  {% set f = s.player.nationality | flag %}
+                  {% if f %}<span style="font-size:0.8rem">{{ f }}</span>{% endif %}
+                </a>
+              </div>
+            </td>
+            <td style="color:var(--yellow);font-weight:800">{{ s.goals or 0 }}</td>
+            <td style="color:var(--cyan);font-weight:700">{{ s.assists or 0 }}</td>
+            <td style="color:var(--text-muted)">{{ s.gpg }}</td>
+            <td class="proj-highlight">{{ s.projected_goals }}</td>
+            <td class="proj-assist">{{ s.projected_assists }}</td>
+            <td style="color:var(--text)">{{ s.involvement }}</td>
+            <td>
+              {% set r = s.rating %}
+              <span style="font-weight:900;color:{% if r >= 8 %}var(--yellow){% elif r >= 6 %}var(--cyan){% elif r >= 4 %}var(--green){% else %}var(--text-muted){% endif %}">
+                {{ r }}
+              </span>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="padding:10px 16px;font-size:0.7rem;color:var(--text-muted);border-top:1px solid var(--border)">
+    Projections = current rate × {{ insights.season_games }} games. Rating = weighted (Goals×2.5 + Assists×1.5) per game, scaled 0–10.
+  </div>
+</div>
+
+
+<!-- ── Involvement leaders ───────────────────────────────────────────── -->
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-lightning-fill" style="color:var(--cyan)"></i>
+    Combined Output Leaders
+    <span style="margin-left:6px;font-size:0.72rem;font-weight:400;color:var(--text-muted)">(Goals + Assists per game)</span>
+  </div>
+  {% for s in insights.by_involvement[:10] %}
+    <div class="scorer-row" style="text-decoration:none">
+      <a href="/player/{{ s.player.id }}" class="scorer-row" style="border:none;padding:10px 16px;display:flex;align-items:center;gap:12px;width:100%">
+        <span class="scorer-rank {% if loop.index == 1 %}rank-gold{% elif loop.index == 2 %}rank-silver{% elif loop.index == 3 %}rank-bronze{% endif %}">
+          {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+        </span>
+        <div class="scorer-avatar">{{ s.player.name | initials }}</div>
+        <div style="flex:1;min-width:0">
+          <div class="scorer-name">
+            {{ s.player.name }}
+            {% set f = s.player.nationality | flag %}{% if f %} {{ f }}{% endif %}
+          </div>
+          <div class="scorer-team">
+            {% if s.team %}{{ s.team.shortName or s.team.name }}{% endif %}
+            · #{{ s.rank }} by goals
+          </div>
+        </div>
+        <div style="text-align:center;min-width:44px">
+          <div style="font-size:1.2rem;font-weight:900;color:var(--cyan)">{{ s.involvement }}</div>
+          <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase">G+A/Gm</div>
+        </div>
+        <div style="text-align:center;min-width:38px">
+          <div style="font-weight:800;color:var(--yellow)">{{ s.goals or 0 }}</div>
+          <div style="font-size:0.6rem;color:var(--text-muted)">Goals</div>
+        </div>
+        <div style="text-align:center;min-width:38px">
+          <div style="font-weight:800;color:var(--cyan)">{{ s.assists or 0 }}</div>
+          <div style="font-size:0.6rem;color:var(--text-muted)">Assists</div>
+        </div>
+      </a>
+    </div>
+  {% endfor %}
+</div>
+
+
+<!-- ── Attack & Defence rankings ────────────────────────────────────── -->
+<div class="att-def-grid">
+
+  <div class="card">
+    <div class="card-head">
+      <i class="bi bi-fire" style="color:var(--red)"></i> Best Attack
+      <span style="margin-left:4px;font-size:0.72rem;font-weight:400;color:var(--text-muted)">(Goals/game)</span>
+    </div>
+    {% for t in insights.best_attack %}
+      <div class="mini-rank-row">
+        <span class="mini-rank">{{ loop.index }}</span>
+        {% if t.team.crest %}
+          <img src="{{ t.team.crest }}" class="mini-crest" onerror="this.style.display='none'">
+        {% endif %}
+        <a href="/team/{{ t.team.id }}" class="mini-name" style="text-decoration:none;color:inherit">
+          {{ t.team.shortName or t.team.name }}
+        </a>
+        <span class="mini-val" style="color:var(--red)">{{ t.gpg_att }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <i class="bi bi-shield-fill" style="color:var(--blue)"></i> Best Defence
+      <span style="margin-left:4px;font-size:0.72rem;font-weight:400;color:var(--text-muted)">(Lowest goals/game conceded)</span>
+    </div>
+    {% for t in insights.best_defence %}
+      <div class="mini-rank-row">
+        <span class="mini-rank">{{ loop.index }}</span>
+        {% if t.team.crest %}
+          <img src="{{ t.team.crest }}" class="mini-crest" onerror="this.style.display='none'">
+        {% endif %}
+        <a href="/team/{{ t.team.id }}" class="mini-name" style="text-decoration:none;color:inherit">
+          {{ t.team.shortName or t.team.name }}
+        </a>
+        <span class="mini-val" style="color:var(--blue)">{{ t.gpg_def }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+
+<!-- ── Team projections + form ──────────────────────────────────────── -->
+<div class="card mb-20">
+  <div class="card-head">
+    <i class="bi bi-calendar-check" style="color:var(--green)"></i>
+    Projected Final Standings
+  </div>
+  <div style="overflow-x:auto">
+    <table class="league-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Team</th>
+          <th title="Current points">Pts</th>
+          <th title="Points per game">PPG</th>
+          <th title="Games remaining">Left</th>
+          <th title="Projected final points">Proj</th>
+          <th title="Last 5 matches form">Form</th>
+          <th title="Form trend vs season average">Trend</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set total = insights.team_stats | length %}
+        {% for t in insights.team_stats %}
+          {% set pos  = t.position %}
+          {% set cl   = insights.cl_spots %}
+          {% set zone = 'zone-cl' if pos <= cl else ('zone-el' if pos == cl + 1 else ('zone-rel' if pos > total - 3 else '')) %}
+          <tr class="{{ zone }}">
+            <td>{{ pos }}</td>
+            <td>
+              <div class="tname">
+                {% if t.team.crest %}<img src="{{ t.team.crest }}" alt="" onerror="this.style.display='none'">{% endif %}
+                <a href="/team/{{ t.team.id }}" style="text-decoration:none;color:inherit;font-weight:700">
+                  {{ t.team.shortName or t.team.name }}
+                </a>
+              </div>
+            </td>
+            <td style="font-weight:800">{{ t.points }}</td>
+            <td style="color:var(--text-muted)">{{ t.ppg }}</td>
+            <td style="color:var(--text-muted)">{{ t.remaining }}</td>
+            <td style="font-weight:900;color:var(--yellow)">{{ t.projected_pts }}</td>
+            <td>
+              <div class="form-dots" style="justify-content:center">
+                {% for c, cls in t.form_str | form_dots %}
+                  <span class="form-dot {{ cls }}" title="{{ c }}"></span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              {% if t.trend > 0.1 %}
+                <span style="color:var(--green);font-weight:700">↑ {{ t.trend }}</span>
+              {% elif t.trend < -0.1 %}
+                <span style="color:var(--red);font-weight:700">↓ {{ t.trend | abs }}</span>
+              {% else %}
+                <span style="color:var(--text-muted)">→</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="padding:10px 16px;font-size:0.68rem;color:var(--text-muted);display:flex;gap:14px;flex-wrap:wrap;border-top:1px solid var(--border)">
+    <span style="border-left:3px solid var(--blue);padding-left:5px">Champions League (top {{ insights.cl_spots }})</span>
+    <span style="border-left:3px solid var(--orange);padding-left:5px">Europa League</span>
+    <span style="border-left:3px solid var(--red);padding-left:5px">Relegation</span>
+    <span style="margin-left:auto">Trend = recent form PPG vs season PPG</span>
+  </div>
+</div>
+
+
+<!-- ── Relegation battle ─────────────────────────────────────────────── -->
+{% set rel_teams = insights.team_stats[-4:] | reverse | list %}
+{% if rel_teams %}
+<div class="card mb-20">
+  <div class="card-head" style="border-left:3px solid var(--red);padding-left:13px">
+    <i class="bi bi-exclamation-triangle-fill" style="color:var(--red)"></i>
+    Relegation Battle
+    <span style="margin-left:auto;font-size:0.72rem;font-weight:500;color:var(--text-muted)">
+      Safety line: {{ insights.safe_pts }} pts
+    </span>
+  </div>
+  {% for t in rel_teams %}
+    <div class="rel-row">
+      {% if t.team.crest %}
+        <img src="{{ t.team.crest }}" style="width:28px;height:28px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
+      {% endif %}
+      <div class="rel-team">
+        <div class="rel-name">
+          <a href="/team/{{ t.team.id }}" style="text-decoration:none;color:inherit">
+            {{ t.team.shortName or t.team.name }}
+          </a>
+          &nbsp;<span style="font-size:0.72rem;color:var(--text-muted)">· #{{ t.position }}</span>
+        </div>
+        <div class="rel-sub">
+          PPG {{ t.ppg }} &nbsp;·&nbsp;
+          {% if t.form_str %}
+            <span>Form: </span>
+            {% for c, cls in t.form_str | form_dots %}
+              <span style="display:inline-block;width:7px;height:7px;border-radius:50%;
+                background:{% if cls == 'win' %}#10B981{% elif cls == 'draw' %}#6B7592{% else %}#EF4444{% endif %};
+                margin-right:2px;vertical-align:middle"></span>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="rel-pts" style="color:{% if t.pts_to_safe == 0 %}var(--green){% else %}var(--red){% endif %}">
+          {{ t.points }} pts
+        </div>
+        <div class="rel-need">
+          {% if t.pts_to_safe > 0 %}
+            Need {{ t.pts_to_safe }} pts ({{ t.wins_to_safe }} wins)
+          {% else %}
+            ✓ Above safety
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

@@ -3,6 +3,75 @@
 
 {% block content %}
 
+<!-- Quick insights strip ───────────────────────────────────────── -->
+{% if insights.best_pace or insights.top_creator or insights.hidden_gem %}
+<div class="insight-strip">
+
+  {% if insights.best_pace %}
+    {% set bp = insights.best_pace %}
+    <a href="/insights/{{ league_code }}" class="insight-pill">
+      <div class="ip-label" style="color:var(--yellow)">🔥 Best season pace</div>
+      <div class="ip-name">{{ bp.player.name }}</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span class="ip-value" style="color:var(--yellow)">{{ bp.projected_goals }}</span>
+        <span style="font-size:0.78rem;color:var(--text-muted)">proj. goals</span>
+      </div>
+      <div class="ip-sub">{{ bp.gpg }} per game &nbsp;·&nbsp; {{ bp.goals }} so far</div>
+    </a>
+  {% endif %}
+
+  {% if insights.top_creator %}
+    {% set tc = insights.top_creator %}
+    <a href="/insights/{{ league_code }}" class="insight-pill">
+      <div class="ip-label" style="color:var(--cyan)">🎯 Top combined output</div>
+      <div class="ip-name">{{ tc.player.name }}</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span class="ip-value" style="color:var(--cyan)">{{ tc.involvement }}</span>
+        <span style="font-size:0.78rem;color:var(--text-muted)">G+A / game</span>
+      </div>
+      <div class="ip-sub">{{ tc.goals }}G + {{ tc.assists or 0 }}A &nbsp;·&nbsp; rating {{ tc.rating }}/10</div>
+    </a>
+  {% endif %}
+
+  {% if insights.hidden_gem %}
+    {% set hg = insights.hidden_gem %}
+    <a href="/insights/{{ league_code }}" class="insight-pill">
+      <div class="ip-label" style="color:var(--green)">💎 Hidden gem</div>
+      <div class="ip-name">{{ hg.player.name }}</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span class="ip-value" style="color:var(--green)">{{ hg.gpg }}</span>
+        <span style="font-size:0.78rem;color:var(--text-muted)">goals / game</span>
+      </div>
+      <div class="ip-sub">Ranked #{{ hg.rank }} total, top-3 efficiency</div>
+    </a>
+  {% elif insights.by_involvement | length >= 3 %}
+    {% set hg = insights.by_involvement[2] %}
+    <a href="/insights/{{ league_code }}" class="insight-pill">
+      <div class="ip-label" style="color:var(--green)">💎 Under the radar</div>
+      <div class="ip-name">{{ hg.player.name }}</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span class="ip-value" style="color:var(--green)">{{ hg.involvement }}</span>
+        <span style="font-size:0.78rem;color:var(--text-muted)">G+A / game</span>
+      </div>
+      <div class="ip-sub">Ranked #{{ hg.rank }} by goals, top-3 output</div>
+    </a>
+  {% endif %}
+
+</div>
+<!-- Full insights link -->
+<div style="text-align:center;margin-bottom:20px">
+  <a href="/insights/{{ league_code }}"
+     style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;
+            border-radius:20px;border:1.5px solid var(--border);font-size:0.83rem;
+            font-weight:700;color:var(--text-muted);text-decoration:none;
+            background:var(--bg-card);transition:border-color 0.15s,color 0.15s">
+    <i class="bi bi-graph-up-arrow" style="color:var(--yellow)"></i>
+    View full insights: title race, projections &amp; relegation battle
+    <i class="bi bi-chevron-right" style="font-size:0.72rem"></i>
+  </a>
+</div>
+{% endif %}
+
 <!-- Trending top scorer ─────────────────────────────────────────── -->
 {% if scorers %}
   {% set top = scorers[0] %}

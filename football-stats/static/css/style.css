@@ -858,4 +858,207 @@ footer a { color: var(--cyan); text-decoration: none; }
   cursor: pointer;
   transition: all 0.12s;
 }
+
+/* ════════════════════════════════════════════════════════════
+   INSIGHTS PAGE
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Quick-insight pill cards (3-column strip) ────────────── */
+.insight-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 680px) { .insight-strip { grid-template-columns: 1fr; } }
+
+.insight-pill {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.insight-pill:hover { border-color: var(--yellow); transform: translateY(-2px); }
+
+.ip-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ip-name  { font-size: 1rem;  font-weight: 900; line-height: 1.1; }
+.ip-value { font-size: 1.6rem; font-weight: 900; line-height: 1; }
+.ip-sub   { font-size: 0.73rem; color: var(--text-muted); line-height: 1.3; }
+
+/* ── Title race card ──────────────────────────────────────── */
+.title-race-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.title-race-row:last-child { border-bottom: none; }
+.tr-pos   { width: 20px; font-size: 0.78rem; color: var(--text-muted); font-weight: 700; flex-shrink: 0; }
+.tr-crest { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
+.tr-name  { flex: 1; font-weight: 700; font-size: 0.9rem; min-width: 0; }
+.tr-bar-wrap { width: 120px; flex-shrink: 0; }
+.tr-bar-bg {
+  height: 5px;
+  background: var(--bg-raised);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.tr-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+.tr-pts   { width: 60px; text-align: right; font-size: 0.82rem; color: var(--text-muted); flex-shrink: 0; }
+.tr-prob  { width: 44px; text-align: right; font-weight: 900; font-size: 0.9rem; flex-shrink: 0; }
+
+/* ── Form dots ────────────────────────────────────────────── */
+.form-dots { display: flex; gap: 3px; }
+.form-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.form-dot.win  { background: var(--green); }
+.form-dot.draw { background: var(--text-muted); }
+.form-dot.loss { background: var(--red); }
+
+/* ── Projection table ─────────────────────────────────────── */
+.proj-table { width: 100%; border-collapse: collapse; }
+.proj-table th {
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 9px 10px;
+  text-align: center;
+  background: var(--bg-raised);
+}
+.proj-table th:first-child,
+.proj-table th:nth-child(2) { text-align: left; }
+.proj-table th:nth-child(2) { padding-left: 0; }
+.proj-table td {
+  padding: 9px 10px;
+  font-size: 0.87rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.proj-table td:first-child { color: var(--text-muted); font-weight: 700; }
+.proj-table td:nth-child(2) { text-align: left; padding-left: 0; }
+.proj-table tr:last-child td { border-bottom: none; }
+.proj-table tr:hover td { background: rgba(255,255,255,0.02); }
+.proj-table a { text-decoration: none; color: inherit; font-weight: 700; }
+.proj-table a:hover { color: var(--yellow); }
+
+.proj-highlight { color: var(--yellow); font-weight: 900; }
+.proj-assist    { color: var(--cyan); font-weight: 800; }
+
+/* ── Player rating badge ──────────────────────────────────── */
+.rating-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  font-weight: 900;
+  border: 2.5px solid;
+  flex-shrink: 0;
+}
+.rating-elite   { color: #F5A623; border-color: #F5A623; }
+.rating-great   { color: #22D3EE; border-color: #22D3EE; }
+.rating-good    { color: #10B981; border-color: #10B981; }
+.rating-average { color: #6B7592; border-color: #6B7592; }
+
+/* ── Section divider ──────────────────────────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 14px;
+}
+.section-divider::before,
+.section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.section-divider-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Attack / Defence row ─────────────────────────────────── */
+.att-def-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 600px) { .att-def-grid { grid-template-columns: 1fr; } }
+
+.mini-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.mini-rank-row:last-child { border-bottom: none; }
+.mini-rank  { width: 18px; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; flex-shrink: 0; }
+.mini-crest { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+.mini-name  { flex: 1; font-size: 0.85rem; font-weight: 700; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-val   { font-size: 0.88rem; font-weight: 900; flex-shrink: 0; }
+
+/* ── Relegation battle card ───────────────────────────────── */
+.rel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.rel-row:last-child { border-bottom: none; }
+.rel-team  { flex: 1; min-width: 0; }
+.rel-name  { font-weight: 700; font-size: 0.9rem; }
+.rel-sub   { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.rel-pts   { font-size: 1.1rem; font-weight: 900; text-align: right; flex-shrink: 0; }
+.rel-need  { font-size: 0.65rem; color: var(--text-muted); text-align: right; }
+
+/* ── Projected stat big number ────────────────────────────── */
+.proj-big {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--yellow);
+}
+.proj-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(17,24,39,0.55);
+  font-weight: 700;
+}
 .toggle-btn.active { background: var(--yellow); color: #111827; }

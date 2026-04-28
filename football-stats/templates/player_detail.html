@@ -76,6 +76,38 @@
 
   <!-- Overview ─────────────────────────────────────────────────── -->
   <div id="tab-overview" class="tab-panel">
+
+    <!-- Season projection banner (only if player found in scorers) -->
+    {% if player_proj %}
+      <div style="background:linear-gradient(135deg,#F5A623 0%,#FFD166 100%);padding:16px 20px;border-bottom:1px solid rgba(0,0,0,0.1)">
+        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.09em;font-weight:800;color:rgba(17,24,39,0.5);margin-bottom:8px">
+          {{ player_proj.league.flag }} {{ player_proj.league.name }} · {{ player_proj.season_games }}-game season projection
+        </div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <div class="proj-big">{{ player_proj.projected_goals }}</div>
+            <div class="proj-label">Projected Goals</div>
+          </div>
+          <div>
+            <div class="proj-big" style="color:var(--cyan);font-size:1.6rem">{{ player_proj.projected_assists }}</div>
+            <div class="proj-label">Projected Assists</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <!-- Rating badge -->
+            {% set r = player_proj.rating %}
+            <div style="font-size:2rem;font-weight:900;line-height:1;color:rgba(17,24,39,0.85)">{{ r }}<span style="font-size:1rem">/10</span></div>
+            <div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:rgba(17,24,39,0.45)">Player rating</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:16px;font-size:0.78rem;color:rgba(17,24,39,0.6);flex-wrap:wrap">
+          <span>{{ player_proj.gpg }} goals/game</span>
+          <span>{{ player_proj.apg }} assists/game</span>
+          <span>{{ player_proj.involvement }} G+A/game</span>
+          <span>{{ player_proj.goals }}G + {{ player_proj.assists }}A in {{ player_proj.played }} games</span>
+        </div>
+      </div>
+    {% endif %}
+
     <div class="stat-grid stat-grid-3">
       <div class="stat-cell">
         <span class="sv">{{ pos_abbr or '—' }}</span>

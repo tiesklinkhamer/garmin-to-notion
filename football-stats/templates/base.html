@@ -20,6 +20,11 @@
        class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
     <a href="/teams?league={{ league_code or 'PL' }}"
        class="nav-link {% if request.path == '/teams' %}active{% endif %}">Teams</a>
+    <a href="/insights/{{ league_code or 'PL' }}"
+       class="nav-link {% if '/insights/' in request.path %}active{% endif %}"
+       style="color:var(--yellow)">
+      <i class="bi bi-graph-up-arrow"></i> Insights
+    </a>
   </div>
 </nav>
 
