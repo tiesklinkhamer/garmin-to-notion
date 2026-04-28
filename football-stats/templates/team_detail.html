@@ -41,8 +41,32 @@
         {% endif %}
       </div>
     </div>
-    <div style="font-size:1.5rem;font-weight:900;color:var(--text-muted);">
-      {{ squad | length }} <span style="font-size:0.75rem;font-weight:600;display:block;text-align:center">Players</span>
+  </div>
+  <!-- Squad stats strip -->
+  <div class="team-stat-strip">
+    {% set gk_count  = squad | selectattr('position','equalto','Goalkeeper') | list | length %}
+    {% set def_count = squad | selectattr('position','equalto','Defence')    | list | length %}
+    {% set mid_count = squad | selectattr('position','equalto','Midfield')   | list | length %}
+    {% set fwd_count = squad | selectattr('position','equalto','Offence')    | list | length %}
+    <div class="team-stat-pill">
+      <span class="tsp-val">{{ squad | length }}</span>
+      <span class="tsp-lbl">Squad</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--yellow)">
+      <span class="tsp-val">{{ gk_count }}</span>
+      <span class="tsp-lbl">GK</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--blue)">
+      <span class="tsp-val">{{ def_count }}</span>
+      <span class="tsp-lbl">DEF</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--green)">
+      <span class="tsp-val">{{ mid_count }}</span>
+      <span class="tsp-lbl">MID</span>
+    </div>
+    <div class="team-stat-pill" style="color:var(--red)">
+      <span class="tsp-val">{{ fwd_count }}</span>
+      <span class="tsp-lbl">FWD</span>
     </div>
   </div>
 
@@ -83,7 +107,10 @@
           <span class="pos-badge {{ pos_cls }}">{{ pos_label }}</span>
           <div class="player-main">
             <div class="player-name-text">{{ player.name }}</div>
-            <div class="player-sub">{{ player.nationality or '' }}</div>
+            <div class="player-sub">
+              {% set f = player.nationality | flag %}
+              {% if f %}{{ f }} {% endif %}{{ player.nationality or '' }}
+            </div>
           </div>
           <div style="font-size:0.78rem;color:var(--text-muted);">{{ player.dateOfBirth or '' }}</div>
           <i class="bi bi-chevron-right" style="color:var(--text-muted);font-size:0.75rem;flex-shrink:0;margin-left:8px;"></i>

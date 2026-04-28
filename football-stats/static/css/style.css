@@ -642,4 +642,220 @@ footer a { color: var(--cyan); text-decoration: none; }
   .player-hero-name { font-size: 1.25rem; }
   .stat-cell .sv { font-size: 1.1rem; }
   .trending-stat .val { font-size: 1.35rem; }
+  .scorer-assists { display: none; }
+  .scorer-gpg     { display: none; }
 }
+
+/* ── Page fade-in ─────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page { animation: fadeUp 0.25s ease both; }
+
+/* ── Goals / assists bar ──────────────────────────────────── */
+.bar-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.goals-bar-bg {
+  height: 3px;
+  background: var(--bg-raised);
+  border-radius: 3px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+.goals-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--yellow);
+  transition: width 0.5s ease;
+}
+.goals-bar-fill.assist { background: var(--cyan); }
+
+/* ── Rank medals ──────────────────────────────────────────── */
+.rank-gold   { color: #F5A623; font-weight: 900; }
+.rank-silver { color: #9CA3AF; font-weight: 800; }
+.rank-bronze { color: #CD7F32; font-weight: 800; }
+
+.scorer-row.top-1 { background: rgba(245, 166, 35, 0.06); }
+.scorer-row.top-1:hover { background: rgba(245, 166, 35, 0.1); }
+
+/* ── Goals-per-game pill ──────────────────────────────────── */
+.scorer-gpg {
+  flex-shrink: 0;
+  text-align: center;
+  min-width: 38px;
+}
+.scorer-gpg .gpval { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); line-height: 1; }
+.scorer-gpg .gplbl { font-size: 0.58rem; text-transform: uppercase; color: var(--text-muted); }
+
+/* ── Scorer tab bar (Goals / Assists) ─────────────────────── */
+.scorer-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.scorer-tab {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.scorer-tab.active {
+  background: var(--yellow);
+  color: #111827;
+  border-color: var(--yellow);
+}
+
+/* ── Live search dropdown ─────────────────────────────────── */
+.search-wrap {
+  position: relative;
+}
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  z-index: 300;
+  overflow: hidden;
+  display: none;
+}
+.sd-section {
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 800;
+  color: var(--text-muted);
+  padding: 10px 14px 5px;
+}
+.sd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.1s;
+}
+.sd-item:hover, .sd-item.focused { background: var(--bg-raised); }
+.sd-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: var(--yellow);
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.sd-crest {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+.sd-name { font-size: 0.88rem; font-weight: 700; }
+.sd-sub  { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
+.sd-goals {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--yellow);
+  flex-shrink: 0;
+}
+.sd-empty {
+  padding: 16px 14px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.sd-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+/* ── W / D / L match badges ───────────────────────────────── */
+.result-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+.badge-w { background: rgba(16,185,129,0.18); color: #10B981; }
+.badge-d { background: rgba(156,163,175,0.18); color: #9CA3AF; }
+.badge-l { background: rgba(239,68,68,0.18);   color: #EF4444; }
+
+/* ── Nationality flag bubble ──────────────────────────────── */
+.nat-flag {
+  font-size: 1.3rem;
+  line-height: 1;
+  display: inline-block;
+}
+
+/* ── Player hero: jersey number watermark ─────────────────── */
+.hero-number {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  font-size: 4rem;
+  font-weight: 900;
+  color: rgba(17,24,39,0.10);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Team stat pills on team page ─────────────────────────── */
+.team-stat-strip {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+.team-stat-pill {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  border-right: 1px solid var(--border);
+}
+.team-stat-pill:last-child { border-right: none; }
+.tsp-val { font-size: 1.15rem; font-weight: 900; display: block; line-height: 1; }
+.tsp-lbl { font-size: 0.62rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.06em; margin-top: 3px; }
+
+/* ── Score highlight: bold winning side ───────────────────── */
+.score-win  { color: var(--green); font-weight: 900; }
+.score-lose { color: var(--red); font-weight: 400; }
+
+/* ── Table toggle buttons (PL / LaLiga) ───────────────────── */
+.toggle-group {
+  display: inline-flex;
+  background: var(--bg-raised);
+  border-radius: 20px;
+  padding: 2px;
+  gap: 2px;
+}
+.toggle-btn {
+  padding: 4px 14px;
+  border-radius: 18px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: none;
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.toggle-btn.active { background: var(--yellow); color: #111827; }

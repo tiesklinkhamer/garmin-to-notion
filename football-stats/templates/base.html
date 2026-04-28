@@ -23,15 +23,21 @@
   </div>
 </nav>
 
-<!-- Search -->
+<!-- Search bar + live dropdown -->
 <div class="search-strip">
-  <form class="search-form" action="/search" method="get" autocomplete="off">
-    <div class="search-input-wrap">
-      <i class="bi bi-search"></i>
-      <input type="text" name="q" placeholder="Search players, teams, nationalities…"
-             value="{{ request.args.get('q', '') }}"/>
+  <div class="search-form">
+    <div class="search-wrap">
+      <form action="/search" method="get" autocomplete="off" onsubmit="document.getElementById('searchDropdown').style.display='none'">
+        <div class="search-input-wrap">
+          <i class="bi bi-search"></i>
+          <input id="searchInput" type="text" name="q"
+                 placeholder="Search players, teams, nationalities…"
+                 value="{{ request.args.get('q', '') }}"/>
+        </div>
+      </form>
+      <div class="search-dropdown" id="searchDropdown"></div>
     </div>
-  </form>
+  </div>
 </div>
 
 <!-- League tabs -->
