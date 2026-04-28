@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}{{ player.name }} — Football Stats{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/" class="text-secondary">Home</a></li>
+    {% if player.currentTeam %}
+      <li class="breadcrumb-item">
+        <a href="/team/{{ player.currentTeam.id }}" class="text-secondary">{{ player.currentTeam.shortName or player.currentTeam.name }}</a>
+      </li>
+    {% endif %}
+    <li class="breadcrumb-item active">{{ player.name }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <!-- Player card -->
+  <div class="col-md-4 col-lg-3">
+    <div class="card border-secondary text-center p-4">
+      <div class="avatar-circle-lg mx-auto mb-3">{{ player.name[:1] }}</div>
+      <h2 class="h5 fw-bold mb-1">{{ player.name }}</h2>
+      {% if player.currentTeam %}
+        <a href="/team/{{ player.currentTeam.id }}" class="text-muted text-decoration-none small">
+          {% if player.currentTeam.crest %}
+            <img src="{{ player.currentTeam.crest }}" width="16" height="16" style="object-fit:contain" onerror="this.style.display='none'" class="me-1">
+          {% endif %}
+          {{ player.currentTeam.name }}
+        </a>
+      {% endif %}
+
+      <hr class="border-secondary my-3">
+      <dl class="row text-start small mb-0">
+        {% if player.position %}
+          <dt class="col-5 text-muted">Position</dt>
+          <dd class="col-7">{{ player.position }}</dd>
+        {% endif %}
+        {% if player.nationality %}
+          <dt class="col-5 text-muted">Nationality</dt>
+          <dd class="col-7">{{ player.nationality }}</dd>
+        {% endif %}
+        {% if player.dateOfBirth %}
+          <dt class="col-5 text-muted">Born</dt>
+          <dd class="col-7">{{ player.dateOfBirth }}</dd>
+        {% endif %}
+        {% if player.shirtNumber %}
+          <dt class="col-5 text-muted">Shirt #</dt>
+          <dd class="col-7">{{ player.shirtNumber }}</dd>
+        {% endif %}
+        {% if player.section %}
+          <dt class="col-5 text-muted">Section</dt>
+          <dd class="col-7">{{ player.section }}</dd>
+        {% endif %}
+      </dl>
+    </div>
+  </div>
+
+  <!-- Stats + recent matches -->
+  <div class="col-md-8 col-lg-9">
+    <!-- Career stats from current contract if available -->
+    {% if player.currentTeam and player.currentTeam.contract %}
+      {% set contract = player.currentTeam.contract %}
+      <div class="card border-secondary mb-4">
+        <div class="card-header border-secondary fw-semibold">
+          <i class="bi bi-file-earmark-text me-1"></i>Contract
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col">
+              <div class="text-muted small">Start</div>
+              <div class="fw-bold">{{ contract.start or '—' }}</div>
+            </div>
+            <div class="col">
+              <div class="text-muted small">Until</div>
+              <div class="fw-bold">{{ contract.until or '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Recent matches -->
+    <div class="card border-secondary">
+      <div class="card-header border-secondary fw-semibold">
+        <i class="bi bi-calendar3 me-1"></i>Recent Matches
+      </div>
+      {% if recent_matches %}
+        <div class="table-responsive">
+          <table class="table table-hover table-dark mb-0 align-middle small">
+            <thead class="table-secondary">
+              <tr>
+                <th class="ps-3">Date</th>
+                <th>Competition</th>
+                <th>Home</th>
+                <th class="text-center">Score</th>
+                <th>Away</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for match in recent_matches %}
+                <tr>
+                  <td class="ps-3 text-muted">{{ match.utcDate[:10] if match.utcDate else '—' }}</td>
+                  <td>{{ match.competition.name if match.competition else '—' }}</td>
+                  <td>
+                    {% if match.homeTeam.crest %}
+                      <img src="{{ match.homeTeam.crest }}" width="16" height="16" style="object-fit:contain" onerror="this.style.display='none'" class="me-1">
+                    {% endif %}
+                    {{ match.homeTeam.shortName or match.homeTeam.name }}
+                  </td>
+                  <td class="text-center fw-bold">
+                    {% if match.score and match.score.fullTime %}
+                      {{ match.score.fullTime.home }} — {{ match.score.fullTime.away }}
+                    {% else %}—{% endif %}
+                  </td>
+                  <td>
+                    {% if match.awayTeam.crest %}
+                      <img src="{{ match.awayTeam.crest }}" width="16" height="16" style="object-fit:contain" onerror="this.style.display='none'" class="me-1">
+                    {% endif %}
+                    {{ match.awayTeam.shortName or match.awayTeam.name }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="card-body text-muted text-center py-4">No recent match data available.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

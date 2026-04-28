@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }} — Football Stats{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <div class="display-1 fw-bold text-muted">{{ code }}</div>
+  <p class="lead text-muted mb-4">{{ message }}</p>
+  {% if code == 403 %}
+    <div class="alert alert-warning d-inline-block text-start" style="max-width:480px">
+      <strong>How to get a free API key:</strong>
+      <ol class="mb-0 mt-1">
+        <li>Visit <a href="https://www.football-data.org/client/register" target="_blank">football-data.org/client/register</a></li>
+        <li>Register for the free tier</li>
+        <li>Copy your API token</li>
+        <li>Create a <code>.env</code> file: <code>FOOTBALL_DATA_API_KEY=your_token</code></li>
+        <li>Restart the app</li>
+      </ol>
+    </div>
+  {% endif %}
+  <div class="mt-3">
+    <a href="/" class="btn btn-primary"><i class="bi bi-house me-1"></i>Back to Home</a>
+  </div>
+</div>
+{% endblock %}
